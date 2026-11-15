@@ -1,11 +1,21 @@
 from datetime import date, datetime
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, computed_field
 
 Rating = Annotated[int, Field(strict=True, ge=1, le=5)]
 Title = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=240)]
-Category = Literal["rest", "breathing", "reflection", "social", "mobility", "medical_review"]
+Category = Literal[
+    "rest",
+    "breathing",
+    "reflection",
+    "social",
+    "mobility",
+    "medical_review",
+    "recovery",
+    "focus",
+    "hydration",
+]
 
 
 class ORMModel(BaseModel):
@@ -73,6 +83,15 @@ class TodoPatch(BaseModel):
 
 
 class TodoOut(ORMModel):
+    reason_code: str | None = None
+
+    @computed_field
+    @property
+    def reason_text(self) -> str | None:
+        from app.catalogs import REASON_CATALOG
+
+        return REASON_CATALOG.get(self.reason_code)
+
     id: str
     astronaut_id: str
     generation_id: str | None
@@ -146,3 +165,76 @@ class DashboardOut(BaseModel):
     bucket: str
     points: list[DashboardPoint]
     is_demo: bool = True
+
+
+class AISuggestionV11(AISuggestion):
+    reason_code: str
+
+
+class AIResponseV11(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    tasks: list[AISuggestionV11] = Field(min_length=3, max_length=3)
+
+
+TrendValue = Literal["increasing", "stable", "decreasing", "insufficient_data"]
+
+
+class TrendSummary(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    window_days: int = Field(ge=2, le=7)
+    sleep: TrendValue = "insufficient_data"
+    mood: TrendValue = "insufficient_data"
+    stress: TrendValue = "insufficient_data"
+    energy: TrendValue = "insufficient_data"
+    connection: TrendValue = "insufficient_data"
+
+
+class CatalogTaskV11(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    template_id: str
+    category: Category
+    title: str
+    duration_minutes: int = Field(strict=True, ge=1, le=20)
+    intensity: Literal["low", "medium"]
+    reason_codes: list[str] = Field(min_length=1)
+
+
+class CatalogReason(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    reason_code: str
+    description: str
+
+
+class AIConstraintsV11(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    task_count: Literal[3] = 3
+    distinct_templates: Literal[True] = True
+    no_diagnosis: Literal[True] = True
+    max_duration_minutes: Literal[10] = 10
+    allowed_intensities: list[Literal["low"]] = Field(
+        default_factory=lambda: ["low"], min_length=1, max_length=1
+    )
+
+
+class AICheckIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    mood: Rating
+    stress: Rating
+    energy: Rating
+    loneliness: Rating
+
+
+class AIRequestV11(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    contract_version: Literal["1.1"]
+    astronaut_id: str
+    mission_date: date
+    health: Score
+    mood: Score
+    latest_measurement: MeasurementOut | None
+    check_in: AICheckIn | None
+    trend_summary: TrendSummary
+    alerts: list[str]
+    task_catalog: list[CatalogTaskV11] = Field(min_length=3, max_length=30)
+    reason_catalog: list[CatalogReason]
+    constraints: AIConstraintsV11

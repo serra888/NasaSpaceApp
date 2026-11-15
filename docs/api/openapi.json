@@ -1348,6 +1348,17 @@
       },
       "TodoOut": {
         "properties": {
+          "reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Code"
+          },
           "id": {
             "type": "string",
             "title": "Id"
@@ -1404,6 +1415,18 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "reason_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Text",
+            "readOnly": true
           }
         },
         "type": "object",
@@ -1417,7 +1440,8 @@
           "source",
           "completed",
           "completed_at",
-          "created_at"
+          "created_at",
+          "reason_text"
         ],
         "title": "TodoOut"
       },

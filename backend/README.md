@@ -148,6 +148,8 @@ Persistent Docker data lives in the `orbiton_postgres` volume. Stop the API and 
 | `AI_SERVICE_URL` | Full HTTP endpoint implementing the AI contract; empty uses fallback |
 | `AI_SERVICE_TOKEN` | Optional bearer token for backend-to-AI requests |
 | `AI_TIMEOUT_SECONDS` | AI HTTP operation timeout; default 8 |
+| `AI_CONTRACT_VERSION` | Outgoing AI contract version, `1.0` by default; use `1.1` after the AI service is ready |
+| `AI_TREND_WINDOW_DAYS` | Completed mission-day window for contract 1.1 trends; default 3, range 2–7 |
 | `OPENAI_API_KEY` | Reserved for the AI developer's provider client; unused by this backend |
 
 The AI developer owns provider selection, prompts, and provider keys. This backend calls the agreed AI service and validates its response. Setting `OPENAI_API_KEY` alone does not enable AI generation. Free-text journal and symptom notes are stored locally and excluded from the AI payload.
@@ -212,6 +214,8 @@ Tests cover persistence, concurrent generation, task refresh, input validation, 
 For schema checks and future migrations, use the appropriate virtual-environment Python path above with `-m alembic check`, `-m alembic revision --autogenerate -m "Describe the change"`, and `-m alembic upgrade head`. Review generated migrations before applying them.
 
 ## Team integration
+
+For the AI contract 1.1 rollout, run `alembic upgrade head` before setting `AI_CONTRACT_VERSION=1.1`. Migration 0002 adds nullable `reason_code` to generated tasks and preserves existing rows. Keep the setting at `1.0` while the AI service still returns the legacy response.
 
 - Backend developer owns `backend/` and `docs/api/`.
 - Frontend developer owns `frontend/`; consume the HTTP API rather than duplicating score formulas.

@@ -1,4 +1,8 @@
-# Orbiton backend ↔ AI service contract — 1.0
+# Orbiton backend ↔ AI service contract — 1.0 and 1.1
+
+The backend supports contract `1.0` and the additive `1.1` proposal. `AI_CONTRACT_VERSION=1.0` remains the default until the AI service supports 1.1. Set it to `1.1` only after the AI endpoint accepts the request and response defined in `AI_CONTRACT_V1_1_PROPOSAL.md`.
+
+Contract 1.1 adds backend-owned task metadata, bounded trend enums, a reason catalog, and a required `reason_code` per selected task. The backend renders task titles and reason text, excludes symptoms and journals, validates the complete selection, and owns fallback and medical-review routing. `TodoOut` may include nullable `reason_code` and computed `reason_text`; legacy, fallback, and user tasks can have null reasons.
 
 The AI developer implements an HTTP POST endpoint in `ai/` and sets its full URL as backend `AI_SERVICE_URL`, for example `http://localhost:8001/generate-missions`. No particular model provider is required. Backend owns persistence, scoring, daily deduplication, and task completion. AI owns contextual selection of approved mission templates.
 

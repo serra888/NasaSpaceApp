@@ -100,6 +100,7 @@ class TodoItem(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     astronaut_id: Mapped[str] = mapped_column(ForeignKey("astronauts.id"))
     generation_id: Mapped[str | None] = mapped_column(ForeignKey("mission_generations.id"))
+    reason_code: Mapped[str | None] = mapped_column(String(40))
     mission_date: Mapped[date] = mapped_column(Date)
     title: Mapped[str] = mapped_column(String(240))
     category: Mapped[str] = mapped_column(String(30))

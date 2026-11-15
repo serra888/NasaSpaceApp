@@ -1,0 +1,213 @@
+"""Backend-owned English display copy; no model-generated prose is accepted."""
+
+REASON_CATALOG = {
+    "short_sleep": "Selected because recent sleep is short or decreasing.",
+    "high_stress": "Selected because reported stress is high or increasing.",
+    "low_energy": "Selected because reported energy is low.",
+    "protect_energy": "Selected to keep this action short and low intensity.",
+    "low_connection": "Selected to support a small moment of crew connection.",
+    "support_mood": "Selected as a small supportive action for reported mood.",
+    "support_focus": "Selected to support a bounded next work block.",
+    "balanced_day": "Selected as a small preventive action for the day.",
+}
+# id, category, approved title, minutes, compatible reasons
+_ROWS = [
+    (
+        "quiet_rest",
+        "rest",
+        "Take a five-minute quiet rest break.",
+        5,
+        ["short_sleep", "low_energy", "protect_energy"],
+    ),
+    (
+        "breathing_pause",
+        "breathing",
+        "Take a short, comfortable breathing break.",
+        2,
+        ["high_stress", "balanced_day"],
+    ),
+    (
+        "positive_moment",
+        "reflection",
+        "Write down one positive moment from today.",
+        3,
+        ["support_mood", "balanced_day"],
+    ),
+    (
+        "energy_note",
+        "reflection",
+        "Note how your energy has changed today.",
+        2,
+        ["low_energy", "protect_energy"],
+    ),
+    (
+        "crew_connection",
+        "social",
+        "Check in with a crew member for a few minutes.",
+        5,
+        ["low_connection", "support_mood", "balanced_day"],
+    ),
+    (
+        "gentle_mobility",
+        "mobility",
+        "Try a brief, comfortable mobility break if your mission guidance allows it.",
+        3,
+        ["balanced_day", "support_focus"],
+    ),
+    (
+        "earth_gaze_reset",
+        "recovery",
+        "Take a two-minute Earth-view or quiet-view reset when available.",
+        2,
+        ["high_stress", "protect_energy", "short_sleep"],
+    ),
+    (
+        "crew_voice_checkin",
+        "social",
+        "Share a short voice check-in with a crew member.",
+        5,
+        ["low_connection", "support_mood"],
+    ),
+    (
+        "single_priority_block",
+        "focus",
+        "Choose one priority for the next work block.",
+        3,
+        ["protect_energy", "support_focus", "balanced_day"],
+    ),
+    (
+        "quiet_listening",
+        "recovery",
+        "Spend a few minutes listening to a calming sound if your duties allow.",
+        3,
+        ["high_stress", "protect_energy"],
+    ),
+    (
+        "screen_pause",
+        "recovery",
+        "Take a short screen break when operationally permitted.",
+        2,
+        ["protect_energy", "short_sleep"],
+    ),
+    (
+        "rest_window",
+        "recovery",
+        "Identify a rest window within your approved schedule.",
+        3,
+        ["short_sleep", "low_energy"],
+    ),
+    (
+        "next_small_step",
+        "focus",
+        "Write the next small step for one current task.",
+        2,
+        ["support_focus", "protect_energy"],
+    ),
+    (
+        "workspace_reset",
+        "focus",
+        "Organize one small part of your workspace within mission guidance.",
+        5,
+        ["support_focus", "balanced_day"],
+    ),
+    (
+        "distraction_note",
+        "focus",
+        "Write down one distraction to revisit after your work block.",
+        2,
+        ["support_focus", "high_stress"],
+    ),
+    (
+        "handover_note",
+        "focus",
+        "Prepare a short handover note for your next work transition.",
+        5,
+        ["support_focus", "balanced_day"],
+    ),
+    (
+        "gratitude_note",
+        "reflection",
+        "Write one thing you appreciate about today.",
+        3,
+        ["support_mood", "balanced_day"],
+    ),
+    (
+        "controllable_step",
+        "reflection",
+        "Name one small action within your control today.",
+        3,
+        ["high_stress", "support_focus"],
+    ),
+    (
+        "effort_acknowledgement",
+        "reflection",
+        "Acknowledge one effort you made today.",
+        2,
+        ["support_mood", "low_energy"],
+    ),
+    (
+        "crew_appreciation",
+        "social",
+        "Share a short appreciation with a crew member when convenient.",
+        3,
+        ["low_connection", "support_mood", "balanced_day"],
+    ),
+    (
+        "shared_break",
+        "social",
+        "Arrange a short shared break if crew schedules allow.",
+        5,
+        ["low_connection", "support_mood"],
+    ),
+    (
+        "crew_listening",
+        "social",
+        "Ask a crew member about their day and listen for a few minutes.",
+        5,
+        ["low_connection", "balanced_day"],
+    ),
+    (
+        "hydration_plan_review",
+        "hydration",
+        "Review your mission-approved hydration plan.",
+        2,
+        ["balanced_day", "support_focus"],
+    ),
+    (
+        "hydration_reminder",
+        "hydration",
+        "Set a reminder for your existing mission-approved hydration schedule.",
+        2,
+        ["balanced_day", "support_focus"],
+    ),
+    (
+        "approved_mobility_plan",
+        "mobility",
+        "Review your mission-approved mobility routine before a permitted break.",
+        3,
+        ["balanced_day", "support_focus"],
+    ),
+]
+TASK_CATALOG = {
+    key: {
+        "category": category,
+        "title": title,
+        "duration_minutes": minutes,
+        "intensity": "low",
+        "reason_codes": reasons,
+    }
+    for key, category, title, minutes, reasons in _ROWS
+}
+TASK_CATALOG["medical_review"] = {
+    "category": "medical_review",
+    "title": "Ask the mission medical team to review the flagged readings.",
+}
+LEGACY_IDS = (
+    "quiet_rest",
+    "breathing_pause",
+    "positive_moment",
+    "energy_note",
+    "crew_connection",
+    "gentle_mobility",
+    "medical_review",
+)

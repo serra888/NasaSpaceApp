@@ -5,6 +5,7 @@ import httpx
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.catalogs import LEGACY_IDS, REASON_CATALOG, TASK_CATALOG
 from app.config import get_settings
 from app.models import (
     Astronaut,
@@ -14,37 +15,24 @@ from app.models import (
     TodoItem,
     utcnow,
 )
-from app.schemas import AIResponse, MissionsOut, StatusOut, TodoOut
+from app.schemas import (
+    AIRequestV11,
+    AIResponse,
+    AIResponseV11,
+    MissionsOut,
+    StatusOut,
+    TodoOut,
+    TrendSummary,
+)
 from app.scoring import health_score, measurement_alerts, mood_score
+from app.trends import trend_summary
 
-# The model selects IDs, never executable instructions or arbitrary medical advice.
-TASK_CATALOG = {
-    "quiet_rest": {"category": "rest", "title": "Take a five-minute quiet rest break."},
-    "breathing_pause": {
-        "category": "breathing",
-        "title": "Take a short, comfortable breathing break.",
-    },
-    "positive_moment": {
-        "category": "reflection",
-        "title": "Write down one positive moment from today.",
-    },
-    "energy_note": {
-        "category": "reflection",
-        "title": "Note how your energy has changed today.",
-    },
-    "crew_connection": {
-        "category": "social",
-        "title": "Check in with a crew member for a few minutes.",
-    },
-    "gentle_mobility": {
-        "category": "mobility",
-        "title": "Try a brief, comfortable mobility break if your mission guidance allows it.",
-    },
-    "medical_review": {
-        "category": "medical_review",
-        "title": "Ask the mission medical team to review the flagged readings.",
-    },
-}
+
+class Selection(str):
+    def __new__(cls, template_id, reason_code=None):
+        item = super().__new__(cls, template_id)
+        item.reason_code = reason_code
+        return item
 
 
 def mission_day() -> date:
@@ -123,9 +111,9 @@ def fallback_ids(summary: StatusOut) -> list[str]:
     return [first, second, "crew_connection"]
 
 
-def ai_context(summary: StatusOut) -> dict:
+def ai_context(summary: StatusOut, trends: TrendSummary | None = None) -> dict:
     # Deliberately excludes free-text symptoms and journals from the external service.
-    return {
+    payload = {
         "contract_version": "1.0",
         "astronaut_id": summary.astronaut_id,
         "mission_date": str(summary.mission_date),
@@ -141,7 +129,14 @@ def ai_context(summary: StatusOut) -> dict:
         if summary.latest_check_in
         else None,
         "alerts": summary.alerts,
-        "task_catalog": [{"template_id": key, **value} for key, value in TASK_CATALOG.items()],
+        "task_catalog": [
+            {
+                "template_id": key,
+                "category": TASK_CATALOG[key]["category"],
+                "title": TASK_CATALOG[key]["title"],
+            }
+            for key in LEGACY_IDS
+        ],
         "constraints": {
             "task_count": 3,
             "distinct_templates": True,
@@ -149,13 +144,41 @@ def ai_context(summary: StatusOut) -> dict:
         },
     }
 
+    if get_settings().ai_contract_version == "1.1":
+        payload.update(
+            contract_version="1.1",
+            trend_summary=(
+                trends or TrendSummary(window_days=get_settings().ai_trend_window_days)
+            ).model_dump(),
+            task_catalog=[
+                {"template_id": key, **value}
+                for key, value in TASK_CATALOG.items()
+                if key != "medical_review"
+                and value["intensity"] == "low"
+                and value["duration_minutes"] <= 10
+            ],
+            reason_catalog=[
+                {"reason_code": key, "description": value} for key, value in REASON_CATALOG.items()
+            ],
+        )
+        payload["constraints"].update(max_duration_minutes=10, allowed_intensities=["low"])
+        return AIRequestV11.model_validate(payload).model_dump(mode="json")
+    return payload
 
-def select_tasks(summary: StatusOut) -> tuple[list[str], str, str | None]:
+
+def select_tasks(
+    summary: StatusOut, trends: TrendSummary | None = None
+) -> tuple[list[str], str, str | None]:
     settings = get_settings()
     fallback = fallback_ids(summary)
     if summary.alerts:
         return fallback, "fallback", "flagged_measurements"
-    if summary.health.stale or summary.mood.stale or summary.health.value is None:
+    if (
+        summary.health.stale
+        or summary.mood.stale
+        or summary.health.value is None
+        or summary.mood.value is None
+    ):
         return fallback, "fallback", "insufficient_fresh_data"
     if not settings.ai_service_url:
         return fallback, "fallback", "ai_not_configured"
@@ -164,22 +187,34 @@ def select_tasks(summary: StatusOut) -> tuple[list[str], str, str | None]:
         if settings.ai_service_token
         else {}
     )
+    payload = ai_context(summary, trends)
+    allowed = {item["template_id"]: item for item in payload["task_catalog"]}
     try:
         with httpx.Client(timeout=settings.ai_timeout_seconds, follow_redirects=False) as client:
-            response = client.post(
-                settings.ai_service_url, json=ai_context(summary), headers=headers
-            )
+            response = client.post(settings.ai_service_url, json=payload, headers=headers)
+        if response.status_code in (400, 422):
+            return fallback, "fallback", "unsupported_ai_contract"
         response.raise_for_status()
-        parsed = AIResponse.model_validate(response.json())
+        parsed = (
+            AIResponseV11 if settings.ai_contract_version == "1.1" else AIResponse
+        ).model_validate(response.json())
         ids = [task.template_id for task in parsed.tasks]
         if len(set(ids)) != 3 or any(
-            task.template_id not in TASK_CATALOG
+            task.template_id not in allowed
             or TASK_CATALOG[task.template_id]["category"] != task.category
             for task in parsed.tasks
         ):
             raise ValueError("Invalid task selection")
         if "medical_review" in ids:
             raise ValueError("Medical review is reserved for flagged readings")
+        if settings.ai_contract_version == "1.1":
+            if any(
+                task.reason_code not in REASON_CATALOG
+                or task.reason_code not in allowed[task.template_id]["reason_codes"]
+                for task in parsed.tasks
+            ):
+                return fallback, "fallback", "invalid_ai_reason"
+            ids = [Selection(task.template_id, task.reason_code) for task in parsed.tasks]
         return ids, "ai", None
     except httpx.TimeoutException:
         return fallback, "fallback", "ai_timeout"
@@ -201,7 +236,10 @@ def generate_missions(session: Session, force: bool = False) -> MissionsOut:
         )
     )
     if generation is None or force:
-        ids, source, reason = select_tasks(status(session))
+        ids, source, reason = select_tasks(
+            status(session),
+            trend_summary(session, day) if get_settings().ai_contract_version == "1.1" else None,
+        )
         if generation is None:
             generation = MissionGeneration(
                 astronaut_id=astronaut_id,
@@ -242,7 +280,9 @@ def generate_missions(session: Session, force: bool = False) -> MissionsOut:
                     generation_id=generation.id,
                     mission_date=day,
                     source=source,
-                    **TASK_CATALOG[key],
+                    title=TASK_CATALOG[key]["title"],
+                    category=TASK_CATALOG[key]["category"],
+                    reason_code=getattr(key, "reason_code", None),
                 )
             )
         session.flush()
