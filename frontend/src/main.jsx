@@ -4,11 +4,11 @@ import Hero,{Icon} from './Hero'
 import Garden from './Garden'
 import Profile from './Profile'
 import TrendChart from './Charts'
-import {changeSelection,extraMissions,includeAssigned,missionLimit,mockGarden,newPlan,plantOptions,selectedMissions} from './garden-model'
+import {extraMissions,missionLimit,mockGarden,plantOptions} from './garden-model'
 import SiteLink from './SiteLink'
-import {demoDateForMission} from './mission-calendar'
 import {Guide} from './Guide'
-import {checkFields,getReadings,loadState,moodIndex,saveState,suggestMissions,validCheckin} from './demo-data'
+import {checkFields,validCheckin} from './demo-data'
+import {api,checkInPayload,missionItem,chartHistory} from './api'
 import './style.css'
 import './trends.css'
 import './garden.css'
@@ -17,7 +17,7 @@ const copy={
  welcome:'How are you feeling today? Check in, then visit Mission Garden to see today’s assigned missions.',
  returning:'How are you feeling today? Check in, then visit Mission Garden to see today’s assigned missions.',
  energy:'Check-in saved. You reported low energy, so I picked a quieter first step. See your three assigned missions in Mission Garden.',
- ready:'Check-in saved. Your Mood is updated and your three missions are ready. See them in Mission Garden.',
+ ready:'Check-in saved. Visit Mission Garden to see your assigned missions.',
  updated:'Check-in updated. Your Mood and trend now reflect your new answers. Your missions are unchanged.',
  logged:'Logged. That’s one thing you did for yourself today.',
  next:'New mission day. Check in to update your Mood and get today’s three missions.',
@@ -57,183 +57,299 @@ function SiteHeader({route,go}){
    </div>
  </header>
 }
+const localKey = 'orbitone.connected-ui.v1'
+const isMissionDate = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
+const utcDate = (offset=0) => new Date(Date.now()+offset*86400000).toISOString().slice(0,10)
+const todoPath = date => '/todos?mission_date='+encodeURIComponent(date)
+const assignedTasks = tasks => tasks.map(task=>({...missionItem(task),assigned:true}))
+const sameId = (a,b) => String(a)===String(b)
+
+function readLocal(){
+  try{return JSON.parse(localStorage.getItem(localKey)??'null')??{}}catch{return {}}
+}
+
+function tasksOn(date,remote,local){
+  const assigned=remote[date]??[]
+  const extras=local.extras?.[date]??{}
+  const custom=extras.custom??[]
+  const chosen=extras.chosen??[]
+  const limit=Math.max(0,Math.min(2,missionLimit.max-assigned.length))
+  const optional=[...extraMissions,...custom]
+  const selected=chosen.map(id=>optional.find(task=>sameId(task.id,id))).filter(Boolean)
+    .slice(0,limit).map(task=>({...task,done:!!extras.checked?.[task.id]}))
+  return {all:[...assigned,...selected],candidates:[...assigned,...optional]}
+}
+
 function App(){
- const [state,setState]=useState(loadState)
- const [form,setForm]=useState(()=>state.checkins[state.day]||cleanForm)
- const [feedback,setFeedback]=useState('')
- const [route,setRoute]=useState(()=>routeFor(location.pathname))
- const [gardenFeedback,setGardenFeedback]=useState('')
- const [pendingNav,setPendingNav]=useState(null)
- function go(href,{replace=false}={}){
-   const url=new URL(href,location.href)
-   if(url.pathname!==location.pathname||url.hash!==location.hash){
-     history[replace?'replaceState':'pushState'](null,'',url.pathname+url.hash)
-   }
-   setRoute(routeFor(url.pathname))
-   setPendingNav({hash:url.hash})
- }
- useEffect(()=>{
-   const pop=()=>{setRoute(routeFor(location.pathname));setPendingNav({hash:location.hash})}
-   addEventListener('popstate',pop)
-   const previousRestoration=history.scrollRestoration
-   history.scrollRestoration='manual'
-   if(location.hash||routeFor(location.pathname)!=='home')setPendingNav({hash:location.hash})
-   return ()=>{history.scrollRestoration=previousRestoration;removeEventListener('popstate',pop)}
- },[])
- useLayoutEffect(()=>{
-   if(!pendingNav)return
-   const target=pendingNav.hash?document.getElementById(pendingNav.hash.slice(1)):null
-   if(target){target.scrollIntoView({block:'start',behavior:'instant'});target.focus({preventScroll:true})}
-   else window.scrollTo({top:0,behavior:'instant'})
- },[route,pendingNav])
- const [visible,setVisible]=useState(false)
- const [open,setOpen]=useState(false)
- const [messageEvent,setMessageEvent]=useState(()=>{
-   try {
-     const last=JSON.parse(localStorage.getItem('orbitone.companion.v1')||'null')
-     if(last?.day===state.day&&state.checkins[state.day])return copy[last.event]?last.event:''
-   }catch{}
-   return ''
- })
- const message=copy[messageEvent]||''
- const heroRef=useRef(null)
- const previousVisit=useRef(false)
- const seen=useRef(new Set())
- const priority=useRef(0)
- const day=state.day
- const checkin=state.checkins[day]
- const rows=getReadings(day)
- const reading=rows.at(-1)
- const missions=state.dailyMissions[day]?.items||[]
- const today=demoDateForMission(day)
- const garden=state.garden??{}
- const savedPlan=garden.days?.[day]??newPlan
- const plantId=plantOptions.some(p=>p.id===garden.plantId)?garden.plantId:plantOptions[0].id
- const assignmentsFor=d=>(state.dailyMissions[d]?.items??suggestMissions(getReadings(d).at(-1),state.checkins[d])).slice(0,3).map(task=>({...task,assigned:true}))
- const assigned=assignmentsFor(day)
- const plan=includeAssigned(savedPlan,assigned)
- const candidatesFor=(d,p)=>[...assignmentsFor(d),...extraMissions,...p.custom]
- const candidates=candidatesFor(day,plan)
- const todayTasks=selectedMissions(plan,candidates)
- const calendarRecords={}
- for(const [n,p] of Object.entries({...garden.days,[day]:plan})){
-   const missionDay=Number(n)
-   calendarRecords[demoDateForMission(missionDay)]={missionDay,tasks:selectedMissions(p,candidatesFor(missionDay,p))}
- }
- const days=Array.from({length:7},(_,i)=>day-6+i)
- function speak(event,direct=false,eventDay=day){
-   const key=eventDay+':'+event
-   if(!direct&&(seen.current.has(key)||Date.now()-priority.current<4500))return
-   if(direct)priority.current=Date.now()
-   seen.current.add(key)
-   setMessageEvent(event);setOpen(true)
-   try{localStorage.setItem('orbitone.companion.v1',JSON.stringify({day:eventDay,event}))}catch{}
- }
- useEffect(()=>{
-   try{previousVisit.current=localStorage.getItem('orbitone.visit.v1')==='1';localStorage.setItem('orbitone.visit.v1','1')}catch{}
- },[])
- useEffect(()=>{
-   document.title='ORBITONE — '+(route==='home'?'Mission Wellbeing':pages.find(page=>page.key===route).name)
-   function checkHero(){setVisible(route==='home'&&(heroRef.current?.getBoundingClientRect().bottom??1)<=(document.querySelector('.site-header')?.offsetHeight??0))}
-   checkHero()
-   addEventListener('scroll',checkHero,{passive:true})
-   addEventListener('resize',checkHero)
-   return ()=>{removeEventListener('scroll',checkHero);removeEventListener('resize',checkHero)}
- },[route])
- useEffect(()=>{
-   if(visible&&!checkin&&!message)speak(previousVisit.current?'returning':'welcome')
- },[visible,checkin,message,day])
- useEffect(()=>{
-   if(matchMedia('(prefers-reduced-motion: reduce)').matches)return
-   const nodes=document.querySelectorAll('[data-reveal]')
-   const watcher=new IntersectionObserver(entries=>{
-     for(const item of entries)if(item.isIntersecting){
-       item.target.classList.add('in-view')
-       watcher.unobserve(item.target)
-     }
-   },{threshold:.14})
-   nodes.forEach(n=>watcher.observe(n))
-   return ()=>watcher.disconnect()
- },[route])
- function commit(next){
-   if(!saveState(next)){setFeedback('Unable to save to this browser. Please allow local storage and try again.');return false}
-   setState(next);return true
- }
- function submit(e){
-   e.preventDefault()
-   if(!validCheckin(form)){setFeedback('Choose a score from 1 to 5 for every field.');return}
-   const next={...state,checkins:{...state.checkins,[day]:{...form,note:(form.note||'').trim()}},dailyMissions:{...state.dailyMissions,[day]:state.dailyMissions[day]||(savedPlan.chosen.length?{items:assigned,lead:null}:{items:suggestMissions(reading,form),lead:null})}}
-   if(commit(next)){
-     setFeedback('Check-in saved. Your Mood and trend have been updated.')
-     speak(missions.length?'updated':form.energy<=2?'energy':'ready',true)
-   }
- }
- function saveGarden(next){
-   if(!saveState(next)){setGardenFeedback('Unable to save to this browser. Please allow local storage and try again.');return false}
-   setGardenFeedback('')
-   setState(next)
-   return true
- }
- function updatePlan(d,fn){
-   const prev=includeAssigned(garden.days?.[d]??newPlan,assignmentsFor(d))
-   const next=fn(prev)
-   if(prev===next)return
-   return saveGarden({...state,
-     dailyMissions:{...state.dailyMissions,[d]:state.dailyMissions[d]??{items:assignmentsFor(d),lead:null}},
-     garden:{...garden,days:{...garden.days,[d]:next}}})
- }
- function selectTask(id){
-   if(!candidates.some(task=>task.id===id&&!task.assigned))return
-   updatePlan(day,p=>changeSelection(p,id,assigned))
- }
- function checkTask(d,id,checked){
-   updatePlan(d,p=>p.chosen.includes(id)?{...p,checked:{...p.checked,[id]:checked}}:p)
- }
- function onCalendarToggle(date,id,checked){
-   const record=calendarRecords[date]
-   if(record)checkTask(record.missionDay,id,checked)
- }
- function addTask(title){
-   if(!title.trim()||plan.chosen.length>=missionLimit.max)return
-   const task={id:crypto.randomUUID(),title:title.trim().slice(0,100),custom:true}
-   return updatePlan(day,p=>changeSelection({...p,custom:[...p.custom,task]},task.id,assigned))
- }
- function nextDay(){
-   const next={...state,day:day+1,
-     dailyMissions:{...state.dailyMissions,[day]:state.dailyMissions[day]??{items:assigned,lead:null}},
-     garden:{...garden,days:{...garden.days,[day]:plan}}}
-   if(saveGarden(next)){setForm(cleanForm);setFeedback('');speak('next',true,next.day);go('/profile/')}
- }
- function updateJournal(missionDay,body){
-   const journal={...state.journal}
-   if(body===null)delete journal[missionDay]
-   else journal[missionDay]={body,updatedAt:new Date().toISOString()}
-   return saveGarden({...state,journal})
- }
- const skip=route==='home'?['#status','mission status']:route==='garden'?['#crew-garden','crew garden']:['#mission-calendar','mission calendar']
- return <>
+  const [server,setServer]=useState(null)
+  const [chartPoints,setChartPoints]=useState([])
+  const [remoteTasks,setRemoteTasks]=useState({})
+  const [connectionError,setConnectionError]=useState('')
+  const [feedback,setFeedback]=useState('')
+  const [saved,setSaved]=useState(false)
+  const [uiError,setUiError]=useState('')
+  const [busy,setBusy]=useState(false)
+  const [pendingNote,setPendingNote]=useState(false)
+  const [form,setForm]=useState(cleanForm)
+  const [local,setLocal]=useState(readLocal)
+  const [route,setRoute]=useState(()=>routeFor(location.pathname))
+  const [pendingNav,setPendingNav]=useState(null)
+  const [visible,setVisible]=useState(false)
+  const [open,setOpen]=useState(false)
+  const [messageEvent,setMessageEvent]=useState('')
+  const heroRef=useRef(null)
+  const active=useRef(false)
+  const mutation=useRef(false)
+  const sequence=useRef(0)
+  const polling=useRef(false)
+  const lastDate=useRef('')
+  const dateRequests=useRef(new Map())
+  const taskVersions=useRef(new Map())
+
+  const day=isMissionDate(server?.mission_date)?server.mission_date:''
+  const {all:missions,candidates}=day?tasksOn(day,remoteTasks,local):{all:[],candidates:[]}
+  const rows=chartHistory(chartPoints,utcDate())
+  const days=rows.map(row=>row.day)
+  const reading=server?.latest_measurement
+  const plantId=plantOptions.some(plant=>plant.id===local.plantId)?local.plantId:plantOptions[0].id
+  const records=Object.fromEntries(Object.keys({...remoteTasks,...local.extras,...(day?{[day]:true}:{})})
+    .filter(isMissionDate).map(date=>[date,{tasks:tasksOn(date,remoteTasks,local).all}]))
+  const message=messageEvent?copy[messageEvent]??'':server?.astronaut_message??''
+
+  function go(href,{replace=false}={}){
+    const url=new URL(href,location.href)
+    if(url.pathname!==location.pathname||url.hash!==location.hash){
+      window.history[replace?'replaceState':'pushState'](null,'',url.pathname+url.hash)
+    }
+    setRoute(routeFor(url.pathname))
+    setPendingNav({hash:url.hash})
+  }
+  useEffect(()=>{
+    const pop=()=>{setRoute(routeFor(location.pathname));setPendingNav({hash:location.hash})}
+    const previousRestoration=window.history.scrollRestoration
+    window.history.scrollRestoration='manual'
+    addEventListener('popstate',pop)
+    if(location.hash||routeFor(location.pathname)!=='home')setPendingNav({hash:location.hash})
+    return ()=>{window.history.scrollRestoration=previousRestoration;removeEventListener('popstate',pop)}
+  },[])
+  useLayoutEffect(()=>{
+    if(!pendingNav)return
+    const target=pendingNav.hash?document.getElementById(pendingNav.hash.slice(1)):null
+    if(target){
+      target.scrollIntoView({block:'start',behavior:'instant'})
+      target.focus({preventScroll:true})
+    }else window.scrollTo({top:0,behavior:'instant'})
+  },[route,pendingNav])
+
+  async function refresh({afterWrite=false}={}){
+    if(!afterWrite&&(polling.current||mutation.current))return
+    if(!afterWrite)polling.current=true
+    const request=++sequence.current
+    try{
+      const status=await api('/status')
+      if(!isMissionDate(status.mission_date))throw new Error('The server returned an invalid mission date.')
+      const [todos,chart]=await Promise.all([
+        api(todoPath(status.mission_date)),
+        api('/dashboard?bucket=day&start='+utcDate(-6)+'T00:00:00Z')
+      ])
+      if(!active.current||request!==sequence.current)return
+      setServer(status)
+      setChartPoints(chart.points)
+      setRemoteTasks(old=>({...old,[status.mission_date]:assignedTasks(todos)}))
+      setConnectionError('')
+      if(lastDate.current&&lastDate.current!==status.mission_date)setMessageEvent('next')
+      lastDate.current=status.mission_date
+    }catch(error){
+      if(active.current&&request===sequence.current)setConnectionError('Backend unavailable: '+error.message)
+    }finally{
+      if(!afterWrite)polling.current=false
+    }
+  }
+  useEffect(()=>{
+    active.current=true
+    void refresh()
+    const timer=setInterval(()=>void refresh(),5000)
+    return ()=>{active.current=false;sequence.current++;clearInterval(timer)}
+  },[])
+
+  useEffect(()=>{
+    document.title='ORBITONE — '+(route==='home'?'Mission Wellbeing':pages.find(page=>page.key===route).name)
+    function checkHero(){setVisible(route==='home'&&(heroRef.current?.getBoundingClientRect().bottom??1)<=(document.querySelector('.site-header')?.offsetHeight??0))}
+    checkHero()
+    addEventListener('scroll',checkHero,{passive:true})
+    addEventListener('resize',checkHero)
+    return ()=>{removeEventListener('scroll',checkHero);removeEventListener('resize',checkHero)}
+  },[route])
+  useEffect(()=>{
+    if(visible&&!message&&!server?.latest_check_in){setMessageEvent('welcome');setOpen(true)}
+  },[visible,message,server])
+  useEffect(()=>{
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches)return
+    const nodes=document.querySelectorAll('[data-reveal]')
+    const watcher=new IntersectionObserver(entries=>{
+      for(const entry of entries)if(entry.isIntersecting){
+        entry.target.classList.add('in-view')
+        watcher.unobserve(entry.target)
+      }
+    },{threshold:.14})
+    nodes.forEach(node=>watcher.observe(node))
+    return ()=>watcher.disconnect()
+  },[route])
+
+  async function loadCalendarDate(date){
+    if(!day||!isMissionDate(date)||date>day||date===day||dateRequests.current.has(date))return
+    const version=taskVersions.current.get(date)??0
+    dateRequests.current.set(date,true)
+    setUiError('')
+    try{
+      const tasks=assignedTasks(await api(todoPath(date)))
+      if(active.current&&(taskVersions.current.get(date)??0)===version){
+        setRemoteTasks(old=>({...old,[date]:tasks}))
+      }
+    }catch(error){
+      setUiError('Could not load missions for '+date+': '+error.message)
+    }finally{dateRequests.current.delete(date)}
+  }
+
+  async function runWrite(work,afterWrite=true){
+    if(mutation.current)return
+    mutation.current=true;sequence.current++;setBusy(true)
+    try{await work()}
+    finally{
+      if(afterWrite)await refresh({afterWrite:true})
+      mutation.current=false
+      setBusy(false)
+    }
+  }
+
+  function report(message,ok=false){setFeedback(message);setSaved(ok)}
+  async function submit(e){
+    e.preventDefault()
+    if(mutation.current||!server||pendingNote)return
+    if(!validCheckin(form)){report('Choose a score from 1 to 5 for every field.');return}
+    const note=form.note.trim()
+    await runWrite(async()=>{
+      try{
+        const result=await api('/check-ins',checkInPayload(form))
+        if(result?.mood)setServer(old=>({...old,mood:result.mood}))
+        report('Check-in saved.',true)
+        setMessageEvent('ready');setOpen(true)
+      }catch(error){report(error.message);return}
+      if(note){
+        try{await api('/journal',{text:note})}
+        catch{
+          setPendingNote(true)
+          report('Check-in saved, but note saving was not confirmed. Check for a duplicate before using Save note only.')
+          return
+        }
+      }
+      setForm(cleanForm)
+    })
+  }
+
+  async function saveNote(){
+    const text=form.note.trim()
+    if(mutation.current||!server||!text)return
+    await runWrite(async()=>{
+      try{
+        await api('/journal',{text})
+        setForm(pendingNote?cleanForm:old=>({...old,note:''}))
+        setPendingNote(false)
+        report('Note saved.',true)
+      }catch(error){report(error.message)}
+    },false)
+  }
+
+  function saveLocal(next){
+    try{
+      localStorage.setItem(localKey,JSON.stringify(next))
+      setLocal(next);setUiError('')
+      return true
+    }catch{
+      setUiError('Unable to save on this device. Check your browser storage settings.')
+      return false
+    }
+  }
+  function changeExtras(date,fn){
+    if(!isMissionDate(date))return false
+    const previous=local.extras?.[date]??{chosen:[],custom:[],checked:{}}
+    return saveLocal({...local,extras:{...local.extras,[date]:fn(previous)}})
+  }
+  function selectTask(id){
+    const choice=candidates.find(task=>sameId(task.id,id)&&!task.assigned)
+    if(!choice)return
+    const isSelected=missions.some(task=>sameId(task.id,id))
+    if(!isSelected&&(missions.length>=missionLimit.max||missions.filter(task=>!task.assigned).length>=2))return
+    changeExtras(day,old=>({...old,
+      chosen:isSelected?old.chosen.filter(key=>!sameId(key,id)):[...old.chosen,id],
+      checked:{...old.checked,[id]:false},
+    }))
+  }
+  function addTask(title){
+    if(!day||!title.trim()||missions.length>=missionLimit.max||missions.filter(task=>!task.assigned).length>=2)return false
+    const item={id:crypto.randomUUID(),title:title.trim().slice(0,100),custom:true}
+    return changeExtras(day,old=>({...old,custom:[...old.custom,item],chosen:[...old.chosen,item.id]}))
+  }
+
+  async function completeTask(date,id,done){
+    const task=records[date]?.tasks.find(item=>sameId(item.id,id))
+    if(!task||mutation.current)return
+    if(!task.assigned){
+      changeExtras(date,old=>({...old,checked:{...old.checked,[id]:done}}))
+      return
+    }
+    setUiError('')
+    await runWrite(async()=>{
+      try{
+        taskVersions.current.set(date,(taskVersions.current.get(date)??0)+1)
+        await api('/todos/'+encodeURIComponent(id),{completed:done},'PATCH')
+        taskVersions.current.set(date,(taskVersions.current.get(date)??0)+1)
+        setRemoteTasks(old=>({...old,[date]:(old[date]??[]).map(item=>sameId(item.id,id)?{...item,done}:item)}))
+        if(done){setMessageEvent('logged');setOpen(true)}
+      }catch(error){setUiError('Could not update mission: '+error.message)}
+    })
+  }
+
+  function updateJournal(date,body){
+    if(!isMissionDate(date))return false
+    const journal={...local.journal}
+    if(body===null)delete journal[date]
+    else journal[date]={body,updatedAt:new Date().toISOString()}
+    return saveLocal({...local,journal})
+  }
+
+  const skip=route==='home'?['#status','mission status']:route==='garden'?['#crew-garden','crew garden']:['#mission-calendar','mission calendar']
+  return <>
   <a className="skip" href={skip[0]}>Skip to {skip[1]}</a>
   <SiteHeader route={route} go={go}/>
-  {gardenFeedback&&<p className="garden-feedback" role="alert">{gardenFeedback}</p>}
-  {route==='garden'?<Garden go={go} day={day} member={mockGarden.member} crew={mockGarden.crew} plantId={plantId} onPlant={id=>saveGarden({...state,garden:{...garden,plantId:id}})} candidates={candidates} tasks={todayTasks} onSelect={selectTask} onToggle={(id,checked)=>checkTask(day,id,checked)} onAdd={addTask} />:route==='profile'?<Profile go={go} member={mockGarden.member} day={day} records={calendarRecords} today={today} onToggle={onCalendarToggle} entries={state.journal??{}} onJournalChange={updateJournal} onNextDay={nextDay}/>:<>
+  {(connectionError||uiError)&&<p className="garden-feedback" role="alert">{uiError||connectionError+' Previously loaded data may be outdated.'}</p>}
+  {route==='garden'?<Garden go={go} member={mockGarden.member} crew={mockGarden.crew} plantId={plantId}
+    onPlant={id=>saveLocal({...local,plantId:id})} candidates={candidates} tasks={missions}
+    onSelect={selectTask} onToggle={(id,done)=>completeTask(day,id,done)} onAdd={addTask} connected busy={busy} ready={!!day}/>
+    :route==='profile'?<Profile go={go} member={mockGarden.member} day={day} records={records} today={day}
+      onToggle={completeTask} entries={local.journal??{}} onJournalChange={updateJournal}
+      onOpenDay={loadCalendarDate} connected busy={busy}/>:<>
   <Hero heroRef={heroRef}/>
   <main className="starfield">
    <div className="mission-layout">
    <div className="mission-content">
    <section className="section section-status" id="status" tabIndex={-1}>
     <SectionCap n="01">FLIGHT STATUS</SectionCap>
-    <div className="heading-row" data-reveal><div><h2>Today’s status.</h2><p>A moment to check in with the person behind the suit.</p></div><span className="day-chip micro"><i/> Mission Day {day}</span></div>
+    <div className="heading-row" data-reveal><div><h2>Today’s status.</h2><p>A moment to check in with the person behind the suit.</p></div><span className="day-chip micro"><i/> Mission date {day||"Loading…"}</span></div>
     <div className="status-grid" data-reveal>
-      <StatusCard name="Health" icon="heart" value={reading?.index??null} label="Demo index" missing="No health summary yet" theme="health"/>
-      <StatusCard name="Mood" icon="mood" value={moodIndex(checkin)} label="Self-reported" missing="No check-in yet" theme="mood"/>
+      <StatusCard name="Health" icon="heart" value={server?.health?.value??null} label={server?.health?.stale?"Stale demo data":"Demo index"} missing="No health summary yet" theme="health"/>
+      <StatusCard name="Mood" icon="mood" value={server?.mood?.value??null} label={server?.mood?.stale?"Stale check-in":"Self-reported"} missing="No check-in yet" theme="mood"/>
     </div>
-    <p className="telemetry micro"><i/> SIMULATED TELEMETRY {reading&&<span>· {reading.heart} BPM · SpO₂ {reading.oxygen}%</span>}</p>
+    <p className="telemetry micro"><i/> SIMULATED TELEMETRY {reading&&<span>· {reading.heart_rate??'—'} BPM · SpO₂ {reading.spo2??'—'}%</span>}</p>
+    {!!server?.health?.missing_fields?.length&&<p>Missing measurements: {server.health.missing_fields.join(', ')}</p>}
+    {server?.alerts?.map(alert=><p key={alert} role="alert">{alert}</p>)}
     <SectionCap n="02">PERSONAL LOG</SectionCap>
     <form className="panel checkin" onSubmit={submit} aria-labelledby="daily-check-in">
       <div><span className="micro accent">PERSONAL LOG / {day}</span><h3 id="daily-check-in" tabIndex={-1}>Daily check-in</h3><p>How are you feeling right now? Choose one answer on each scale.</p></div>
       <div className="ratings-grid">{checkFields.map(field=><Rating key={field.key} field={field} value={form[field.key]} onChange={n=>{setForm({...form,[field.key]:n});setFeedback('')}}/>)}</div>
-      <label className="note-label">Short note <span>Optional · stored on this device</span><textarea name="note" maxLength={320} rows={3} placeholder="Anything you’d like to remember?" value={form.note||''} onChange={e=>{setForm({...form,note:e.target.value});setFeedback('')}}/></label>
-      <div className="form-end"><button type="submit" className="button primary">Save Check-in <Icon name="right" size={17}/></button><span role="status" className={feedback.startsWith('Check-in')?'saved':'error'}>{feedback}</span></div>
+      <label className="note-label">Short note <span>Optional · saved to your backend journal</span><textarea name="note" maxLength={320} rows={3} placeholder="Anything you’d like to remember?" value={form.note||''} onChange={e=>{setForm({...form,note:e.target.value});setFeedback('')}}/></label>
+      {pendingNote&&<p className="caption">The check-in is already saved. Retry the note alone, or <button type="button" className="text-link" disabled={busy} onClick={()=>{setPendingNote(false);setForm(cleanForm);report('Check-in saved. Unconfirmed note cleared.',true)}}>clear the unconfirmed note</button>.</p>}
+      <div className="form-end"><button type="submit" disabled={busy||!server||pendingNote} className="button primary">Save Check-in <Icon name="right" size={17}/></button><button type="button" className="button outline" disabled={busy||!server||!form.note.trim()} onClick={saveNote}>Save note only</button><span role="status" className={saved?'saved':'error'}>{feedback}</span></div>
     </form>
    </section>
    <section className="section home-check-history" id="history" tabIndex={-1} aria-labelledby="history-title">
@@ -242,8 +358,8 @@ function App(){
       <figure className="history-transmission"><img src="/media/trends-flight-portrait.webp" alt="A landscape reflected in an astronaut’s visor" width="630" height="960" loading="lazy"/><figcaption className="micro">ORBITONE / FIELD NOTES</figcaption></figure>
     </div>
     <div className="charts-grid">
-      <TrendChart id="sleep-trend" title="Sleep Duration" unit="hours" min={0} max={10} ticks={[0,2,4,6,8,10]} days={days} values={days.map(d=>rows.find(x=>x.day===d)?.sleep)} color="#7FB8FF" empty="No sleep readings yet."/>
-      <TrendChart id="mood-trend" title="Mood Check-ins" unit="1–5 rating" min={1} max={5} ticks={[1,2,3,4,5]} days={days} values={days.map(d=>state.checkins[d]?.mood)} color="#BDABFA" empty="No mood check-ins in this period."/>
+      <TrendChart id="sleep-trend" title="Sleep Duration" unit="hours" min={0} max={24} ticks={[0,6,12,18,24]} days={days} values={rows.map(row=>row.sleep)} color="#7FB8FF" empty="No sleep readings yet."/>
+      <TrendChart id="mood-trend" title="Mood Check-ins" unit="Mood score / 100" min={0} max={100} ticks={[0,25,50,75,100]} days={days} values={rows.map(row=>row.mood)} color="#BDABFA" empty="No mood check-ins in this period."/>
     </div>
    </section>
    <footer className="section footer"><div><a className="brand-footer" href="#top"><Icon name="orbit" size={22}/> ORBITONE</a><p>A NASA Space Apps 2026 prototype. Demo indexes are not clinical scores.</p></div><div><a href="https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/">Challenge brief <Icon name="right" size={14}/></a><small>Hero helmet generated with Tripo Studio.</small></div></footer>

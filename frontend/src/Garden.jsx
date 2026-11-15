@@ -35,7 +35,7 @@ function CrewShelves({member,crew,plantId,onPlant}){
 }
 
 const why={rest:'A quiet pause gives you a low-effort starting point.',reset:'A short pause makes room between demanding tasks.',crew:'A small exchange helps you stay connected to the crew.',reflect:'A brief reflection turns your check-in into one concrete step.',mobility:'It’s an easy break to fit between activities.',space:'A small reset keeps the space around you usable.'}
-function MissionCard({task,index,selected,done,full,onSelect,onToggle}){
+function MissionCard({task,index,selected,done,full,onSelect,onToggle,busy}){
   return <article className={'panel mission-card'+(selected?' selected':'')}>
     <div className="mission-label"><span className="micro">{task.custom?'PERSONAL MISSION':`MISSION / ${String(index+1).padStart(2,'0')}`}</span><Icon name={task.custom?'note':['sleep','crew','note','heart','spark'][index%5]} size={22}/></div>
     <span className="mission-tag">{task.tag??'Self-assigned'}{task.assigned&&' · Assigned'}</span>
@@ -43,39 +43,41 @@ function MissionCard({task,index,selected,done,full,onSelect,onToggle}){
     {task.detail&&<p>{task.detail}</p>}
     {!task.custom&&<details><summary>Why this mission?</summary><p>{why[task.id]??'A small, manageable step for your mission day.'}</p></details>}
     <div className="mission-actions">
-      {!task.assigned&&<button type="button" className="button outline" aria-pressed={selected} disabled={full&&!selected} onClick={()=>onSelect(task.id)}>{selected?'Selected':'Select mission'}</button>}
-      {selected&&<button type="button" className={'button '+(done?'complete':'muted')} aria-pressed={done} onClick={()=>onToggle(task.id,!done)}>{done?<><Icon name="check" size={16}/> Completed</>:'Mark complete'}</button>}
+      {!task.assigned&&<button type="button" className="button outline" aria-pressed={selected} disabled={busy||(full&&!selected)} onClick={()=>onSelect(task.id)}>{selected?'Selected':'Select mission'}</button>}
+      {selected&&<button type="button" className={'button '+(done?'complete':'muted')} aria-pressed={done} disabled={busy} onClick={()=>onToggle(task.id,!done)}>{done?<><Icon name="check" size={16}/> Completed</>:'Mark complete'}</button>}
     </div>
   </article>
 }
 
-function MissionPicker({candidates,tasks,onSelect,onToggle,onAdd}){
+function MissionPicker({candidates,tasks,onSelect,onToggle,onAdd,connected=false,busy=false,ready=true}){
   const formId=useId()
   const [draft,setDraft]=useState('')
   const full=tasks.length>=missionLimit.max
   const completed=tasks.filter(task=>task.done).length
-  const suggested=candidates.filter(task=>!task.custom)
+  const suggested=candidates.filter(task=>task.assigned)
+  const optional=candidates.filter(task=>!task.assigned&&!task.custom)
   const personal=candidates.filter(task=>task.custom)
   const [extras,setExtras]=useState(false)
-  function card(task,index){const selected=tasks.find(m=>m.id===task.id);return <MissionCard key={task.id} task={task} index={index} selected={!!selected} done={selected?.done} full={full} onSelect={onSelect} onToggle={onToggle}/>}
+  function card(task,index){const selected=tasks.find(m=>m.id===task.id);return <MissionCard key={task.id} task={task} index={index} selected={!!selected} done={selected?.done} full={full} busy={busy} onSelect={onSelect} onToggle={onToggle}/>}
   return <section className="trends-shell garden-missions section-missions" id="missions" tabIndex={-1} aria-labelledby="missions-heading">
     <div className="section-cap micro"><span>02</span><i/> SMALL STEPS</div>
     <div className="heading-row"><div><h2 id="missions-heading">Today’s missions.</h2><p>Three missions are assigned each day. You can add up to two more.</p></div><div className="mission-counts" aria-live="polite"><span className="day-chip micro">{tasks.length} / 5 missions</span><span className="day-chip micro">{completed} of {tasks.length} completed</span></div></div>
-    <div className="mission-grid">{suggested.slice(0,3).map(card)}</div>
-    {suggested.length>3&&<div className="additional-missions">
+    <div className="mission-grid">{suggested.map(card)}</div>
+    {!suggested.length&&<p className="caption">{ready?'No assigned missions yet. Save a check-in on Home to get your missions.':'Waiting for server missions.'}</p>}
+    {optional.length>0&&<div className="additional-missions">
       <button type="button" className="button outline" aria-expanded={extras} onClick={()=>setExtras(v=>!v)}>{extras?'Hide extra suggestions':'See extra suggestions'} <Icon name="down" size={16}/></button>
-      {extras&&<div className="mission-grid">{suggested.slice(3).map((task,i)=>card(task,i+3))}</div>}
+      {extras&&<div className="mission-grid">{optional.map((task,i)=>card(task,i+suggested.length))}</div>}
     </div>}
-    <p className="caption">Required missions are assigned automatically in this demo. Live AI assignment is not connected yet.</p>
+    <p className="caption">{connected?'Assigned missions come from the backend. Optional missions stay on this device.':'Required missions are assigned automatically in this demo.'}</p>
     <form className="personal-mission" onSubmit={e=>{e.preventDefault();if(!full&&draft.trim()&&onAdd(draft.trim()))setDraft('')}}>
       <div><label htmlFor={formId}>Write your own mission</label><p>{full?'You’ve reached today’s five-mission limit.':'Add one small step that fits your day.'}</p></div>
-      <div className="personal-mission-fields"><input id={formId} value={draft} onChange={e=>setDraft(e.target.value)} placeholder="e.g. Stretch after lunch" maxLength={100} required/><button className="button primary" type="submit" disabled={full||!draft.trim()}>Add mission <span aria-hidden="true">+</span></button></div>
+      <div className="personal-mission-fields"><input id={formId} value={draft} onChange={e=>setDraft(e.target.value)} placeholder="e.g. Stretch after lunch" maxLength={100} required/><button className="button primary" type="submit" disabled={busy||!ready||full||!draft.trim()}>Add mission <span aria-hidden="true">+</span></button></div>
     </form>
     {personal.length>0&&<div className="mission-grid home-personal-missions">{personal.map(card)}</div>}
   </section>
 }
 
-export default function Garden({go,member,crew,plantId,onPlant,candidates,tasks,onSelect,onToggle,onAdd}){
+export default function Garden({go,member,crew,plantId,onPlant,candidates,tasks,onSelect,onToggle,onAdd,connected=false,busy=false,ready=true}){
   return <main className="orbit-secondary garden-page trends-starfield" id="top">
     <section className="trends-opening garden-hero" aria-labelledby="garden-title">
       <div className="trends-shell trends-hero-inner">
@@ -97,7 +99,7 @@ export default function Garden({go,member,crew,plantId,onPlant,candidates,tasks,
       </div>
     </section>
     <CrewShelves member={member} crew={crew} plantId={plantId} onPlant={onPlant}/>
-    <MissionPicker candidates={candidates} tasks={tasks} onSelect={onSelect} onToggle={onToggle} onAdd={onAdd}/>
+    <MissionPicker candidates={candidates} tasks={tasks} connected={connected} busy={busy} ready={ready} onSelect={onSelect} onToggle={onToggle} onAdd={onAdd}/>
     <section className="trends-shell garden-rules">
       <div><span className="micro">GARDEN FIELD GUIDE</span><h2>How your plant changes.</h2></div>
       <div><p>Complete your three assigned missions and any extras you’ve added to help keep your plant green. At the end of the day, unfinished missions can move it through five color states.</p>

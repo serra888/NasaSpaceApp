@@ -133,3 +133,6 @@
  .hero-copy .hero-side-right p{padding:0;margin:0;font-size:clamp(.82rem,2.45vw,1.02rem)}
  .hero-copy .hero-side-right p br{display:initial}
 }
+
+/* Disabled form and mission controls, including writes pending on the API. */
+button:disabled{opacity:.55;cursor:not-allowed}
