@@ -1,6 +1,7 @@
 param(
     [string]$Uri = "http://127.0.0.1:3002/generate-missions",
-    [string]$Token = "demo-token"
+    [string]$Token = "demo-token",
+    [switch]$ShowRequest
 )
 
 $ErrorActionPreference = "Stop"
@@ -68,13 +69,20 @@ if ($Token) {
 
 Write-Host "Sending contract 1.0 test data to $Uri ..." -ForegroundColor Cyan
 
+$json = $payload | ConvertTo-Json -Depth 10
+if ($ShowRequest) {
+    Write-Host "`nRequest JSON (secrets excluded):" -ForegroundColor Yellow
+    Write-Output $json
+    Write-Host "`nResponse JSON:" -ForegroundColor Yellow
+}
+
 try {
     $result = Invoke-RestMethod `
         -Method Post `
         -Uri $Uri `
         -ContentType "application/json" `
         -Headers $headers `
-        -Body ($payload | ConvertTo-Json -Depth 10) `
+        -Body $json `
         -TimeoutSec 20
 
     Write-Host "Success: AI returned three approved templates." -ForegroundColor Green
