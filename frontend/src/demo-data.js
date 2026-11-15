@@ -1,6 +1,7 @@
 // API integration seam: replace this mock store with a client that returns the same data shape.
-const MOCK_KEY = 'orbitone.demo.v1'
-export const startDay = 127
+const MOCK_KEY = 'orbitone.demo.v2'
+const LEGACY_MOCK_KEY = 'orbitone.demo.v1'
+export const startDay = 1
 export const checkFields = [
   { key:'mood', name:'Mood', low:'Low', high:'Great' },
   { key:'stress', name:'Stress', low:'Calm', high:'High' },
@@ -9,14 +10,19 @@ export const checkFields = [
 ]
 const sleepHours = [7.1,7.6,6.9,7.2,7.4,6.7,5.9]
 export const history = sleepHours.map((sleep,i)=>({
-  day:121+i, sleep, heart:[66,70,65,68,68,70,72][i],
+  day:1+i, sleep, heart:[66,70,65,68,68,70,72][i],
   oxygen:[98,98,97,99,98,98,97][i], index:[86,89,85,90,88,85,82][i],
 }))
-const initial = {day:startDay, checkins:{}, dailyMissions:{}, closeouts:{}}
+const initial = {day:startDay, checkins:{}, dailyMissions:{}, closeouts:{}, garden:{}}
 export function loadState(storage=globalThis.localStorage) {
   try {
     const data = JSON.parse(storage?.getItem(MOCK_KEY) ?? 'null')
     if (data && Number.isInteger(data.day) && data.day>=startDay && data.checkins && data.dailyMissions && data.closeouts) return data
+    const old=JSON.parse(storage?.getItem(LEGACY_MOCK_KEY)??'null')
+    if(old?.day>=127){
+      const shift=entries=>Object.fromEntries(Object.entries(entries??{}).filter(([day])=>Number(day)>=127).map(([day,value])=>[Number(day)-126,value]))
+      return {...initial,day:old.day-126,checkins:shift(old.checkins),dailyMissions:shift(old.dailyMissions),closeouts:shift(old.closeouts)}
+    }
   } catch {}
   return {...initial}
 }
@@ -24,9 +30,9 @@ export function saveState(state,storage=globalThis.localStorage) {
   try { storage?.setItem(MOCK_KEY,JSON.stringify(state)); return !!storage } catch { return false }
 }
 export function getReadings(day) {
-  if(day<=startDay) return history.filter(x=>x.day<=day)
-  return [...history,...Array.from({length:day-startDay},(_,i)=>({
-    day:startDay+i+1, sleep:[6.2,6.8,7.1,7.3][i%4], heart:[70,68,69,67][i%4],
+  if(day<=history.length)return history.filter(x=>x.day<=day)
+  return [...history,...Array.from({length:day-history.length},(_,i)=>({
+    day:history.length+i+1, sleep:[6.2,6.8,7.1,7.3][i%4], heart:[70,68,69,67][i%4],
     oxygen:[98,97,98,99][i%4], index:[84,86,87,90][i%4],
   }))]
 }

@@ -1,0 +1,147 @@
+/* Shared black starfield and editorial typography for the two secondary pages. */
+.orbit-secondary,.home-check-history{
+ --display:'Orbit Display',Impact,'Arial Narrow',sans-serif;
+ --lunar-line:#34445f;
+ --lunar-warm:#ed9169;
+ --lunar-ink:#07101f;
+ --paper:#faf9f7;
+ --dark-copy:#475164;
+ --ember:#fa7546;
+}
+.orbit-secondary{color:var(--text);overflow:clip}
+.orbit-secondary .trends-opening h1{font-size:clamp(6rem,12.8vw,12.5rem)}
+.orbit-secondary .trends-hero-inner{min-height:clamp(570px,55vw,730px)}
+.orbit-secondary .trends-hero-copy{width:min(100%,600px)}
+.orbit-secondary .trends-footer{margin-top:clamp(32px,5vw,70px)}
+.orbit-secondary .trends-footer>.micro{color:var(--sub)}
+.garden-hero{background:radial-gradient(ellipse at 27% 40%,#ad5b2c25,transparent 36%),linear-gradient(90deg,#060d19 7%,#060d19e8 25%,#060d19a0 42%,transparent 74%),linear-gradient(0deg,#030813,transparent 25%),url('/media/garden/zinnia.webp') center right/cover no-repeat,#060d19}
+.garden-hero::after{background:linear-gradient(0deg,#040914c9,transparent)}
+.garden-prologue{position:relative;background:linear-gradient(100deg,#101b2b,#0c1423 75%,#12192c);border-block:1px solid #899fb72e}
+.garden-prologue-inner{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.81fr);align-items:center;gap:7%;padding-block:28px;min-height:clamp(230px,28vw,357px)}
+.garden-prologue .trends-watermark{color:#b7cdef11;top:-.015em;left:-.03em}
+.garden-prologue-copy{position:relative;z-index:1}
+.garden-prologue-copy .trends-rule{margin-top:10px}
+.garden-prologue h2,.garden-shelf-head h2,.home-check-history h2{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:-.025em;font-size:clamp(3.36rem,7.25vw,7rem);line-height:.85}
+.garden-prologue p,.garden-shelf-head p{margin-top:14px}
+.garden-window{position:relative;align-self:end;transform:translateY(54px);margin:0;z-index:1;isolation:isolate;aspect-ratio:1.9;overflow:hidden;border:1px solid #819bba61;background:#0b1525}
+.garden-window img{width:100%;height:100%;object-fit:cover;object-position:center 65%}
+.garden-window figcaption{position:absolute;bottom:0;padding:12px;inset-inline:0;background:linear-gradient(transparent,#040914ca)}
+.garden-crew{padding-top:clamp(80px,10vw,140px)}
+.garden-shelf-head{margin-bottom:24px}
+.garden-shelf-head h2{font-size:clamp(3rem,6.8vw,6rem)}
+.garden-deck{display:grid;grid-template-columns:minmax(0,3.2fr) minmax(176px,1fr);align-items:center;gap:14px}
+.garden-scene{position:relative;isolation:isolate;aspect-ratio:3/2}
+.garden-shelves-img{display:block;width:100%;height:auto}
+.garden-bay{position:absolute;left:19.5%;right:10%;height:21%}
+.garden-bay[data-slot="1"]{top:8.8%;bottom:auto}.garden-bay[data-slot="2"]{top:32.5%;bottom:auto}.garden-bay[data-slot="3"]{top:53.2%;bottom:auto}.garden-bay[data-slot="4"]{top:73.3%;bottom:auto}
+.garden-potted{position:absolute;left:44.4%;bottom:8%;width:20%;height:81%;object-fit:contain;object-position:center bottom;transform:translateX(-50%);filter:drop-shadow(0 4px 7px #000a)}
+.garden-bay[data-slot="1"] .garden-potted{filter:drop-shadow(0 0 10px #a7d96550)}
+.bay-caption{position:absolute;left:4%;top:12%;display:flex;flex-direction:column;gap:2px;padding:4px 7px;max-width:18ch;border-left:2px solid #91a6c6;background:#080e1cda;color:#edf5ff;font-size:clamp(.52rem,1.38vw,.86rem);line-height:1.2}
+.bay-caption span{color:#d0e0f4;font-size:.79em}.garden-bay[data-slot="1"] .bay-caption{border-color:var(--mint)}.garden-bay[data-slot="1"] .bay-caption b{color:#a5f2c7}
+.plant-picker{min-width:0;padding:0;border:0;margin:0;display:grid;gap:9px}
+.plant-picker legend{padding:0 0 11px;color:#d8e6f6}
+.plant-option{position:relative;display:grid;grid-template-columns:minmax(32px,90px) minmax(0,1fr);gap:8px;align-items:center;min-width:0;min-height:74px;padding:9px 12px;border:1px solid #31455f;border-radius:10px;text-align:left;background:#101a29}
+.plant-option:hover,.plant-option[aria-pressed="true"]{background:#122b2b;border-color:#65d9a7}
+.plant-option>img{width:100%;height:clamp(48px,8vw,92px);object-fit:contain}
+.plant-option>span{display:grid;gap:2px}.plant-option small{color:#a9e4be}.plant-option strong{font-size:clamp(.82rem,1.5vw,1.1rem)}.plant-option>span>span{color:var(--sub);font-size:.7rem}
+.plant-option>svg{position:absolute;top:7px;right:8px;color:var(--mint)}
+.shelf-legend{display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap;padding-block:12px;border-block:1px solid #31445e;font:700 .67rem/1.45 var(--mono);letter-spacing:.07em;color:var(--sub)}
+.shelf-legend i{margin-right:4px;width:7px;height:7px;display:inline-block;border-radius:50%;background:var(--mint)}
+.garden-missions{padding-block:clamp(52px,9vw,110px) clamp(32px,5vw,56px)}
+.garden-missions h2{font-size:clamp(2.6rem,6vw,5.2rem);font-weight:650;letter-spacing:-.075em}
+.garden-missions .mission-card{min-width:0;overflow-wrap:anywhere}
+.garden-missions .mission-counts{display:flex;gap:5px;flex-wrap:wrap}
+.additional-missions{margin-top:13px}.additional-missions>.mission-grid{margin-top:10px}
+.garden-rules{display:grid;grid-template-columns:1fr 1.15fr;gap:19px;padding:clamp(18px,4vw,40px);border:1px solid #31455e;border-top:2px solid #5d9c82;border-radius:12px;background:linear-gradient(130deg,#14251f,#111e2f 68%)}
+.garden-rules h2{font-size:clamp(1.56rem,3.5vw,2.8rem);margin-top:6px}
+.garden-rules .micro{color:#9ee8bd}
+.plant-colors{display:flex;flex-wrap:wrap;gap:9px 15px;margin-top:13px;font-size:.75rem;color:#d1e1ee}.plant-colors>span{display:flex;align-items:center;gap:6px}
+.plant-colors i{background:#79df92;width:8px;height:8px;border-radius:50%}
+.plant-colors i[data-color="1"]{background:#b5de79}.plant-colors i[data-color="2"]{background:#ede587}.plant-colors i[data-color="3"]{background:#eeb278}.plant-colors i[data-color="4"]{background:#b38f80}
+.garden-closeout #review-title{font-size:clamp(1.65rem,4.6vw,3.4rem);margin:.4rem 0 .5rem}
+.garden-profile-link{margin-top:19px}
+.garden-feedback{position:fixed;z-index:42;top:calc(var(--site-header-height) + 8px);left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);background:#4c232a;color:#ffe0e3;padding:10px 16px;border-radius:8px}
+.orbit-secondary button:disabled{opacity:.55;cursor:not-allowed}
+.profile-hero{overflow:hidden;isolation:isolate}
+.profile-hero .trends-hero-inner{min-height:clamp(520px,49vw,690px)}
+.profile-day{font-size:clamp(1.3rem,3vw,2.5rem);color:var(--text);margin-top:18px;font-weight:650}
+.profile-location{display:flex;align-items:center;gap:8px;font-size:clamp(.82rem,1.55vw,1.12rem);margin-top:7px;color:#d1dce9}
+.profile-location svg{flex:none;color:var(--ice)}
+.profile-portrait{position:absolute;z-index:1;inset:clamp(90px,11vw,158px) 6% 0 auto;width:min(40%,500px);pointer-events:none;overflow:hidden;mask-image:linear-gradient(180deg,#000 80%,transparent)}
+.profile-portrait img{display:block;transform:scaleX(-1);width:100%;height:auto;filter:drop-shadow(0 9px 20px #03050c96)}
+.home-check-history{padding-top:clamp(43px,6vw,85px);border-top:1px solid #2d405c85}
+.home-check-history h2{font-size:clamp(3.2rem,6.4vw,6rem);letter-spacing:-.025em;font-weight:700}
+.home-check-history .charts-grid{margin-top:25px}
+.home-check-history .section-cap{margin-bottom:12px}
+#crew-garden,#history{scroll-margin-top:calc(var(--site-header-height) + 14px)}
+@media(max-width:900px){
+ .orbit-secondary .trends-opening h1{font-size:clamp(5rem,13vw,8.7rem)}
+ .garden-hero{background-position:center,center,center,59% center}
+}
+@media(max-width:620px){
+ .site-header-inner{width:calc(100% - 24px);gap:5px}
+ .site-header nav{gap:clamp(1px,2.1vw,12px)}
+ .site-header nav a{font-size:clamp(.67rem,2.8vw,.82rem);padding-inline:3px}
+ .site-brand{gap:3px;letter-spacing:.08em}
+ .site-brand svg{width:16px}
+ .hero-copy .hero-side{justify-content:flex-start}
+ .orbit-secondary .trends-opening h1{font-size:clamp(4.2rem,14.3vw,6rem)}
+ .orbit-secondary .trends-hero-inner{min-height:535px;padding-top:calc(var(--site-header-height) + 45px)}
+ .garden-hero{background-image:linear-gradient(90deg,#060d19 0%,#060d19dd 23%,#060d1950 100%),linear-gradient(0deg,#030813 0%,transparent 47%),url('/media/garden/zinnia.webp');background-position:left center,center,63% center}
+ .garden-hero .trends-hero-summary{max-width:22ch}
+ .garden-prologue-inner{grid-template-columns:1fr;gap:15px;padding-block:30px 0;min-height:0}
+ .garden-window{width:75%;margin-left:auto;transform:translateY(26px)}
+ .garden-crew{padding-top:71px}
+ .garden-deck{grid-template-columns:1fr}
+ .garden-scene{margin-inline:-14px}
+ .plant-picker{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+ .plant-option{grid-template-columns:1fr;text-align:center;padding:8px 4px;gap:3px}
+ .plant-option>img{height:50px;width:90%;margin-inline:auto}
+ .plant-option>span>span{font-size:.63rem}
+ .plant-option small{display:none}
+ .plant-option>svg{width:12px;right:3px;top:3px}
+ .garden-rules{grid-template-columns:1fr;gap:11px}
+ .profile-portrait{right:-14%;top:188px;width:clamp(196px,64vw,360px)}
+ .profile-location{max-width:21ch}
+ .home-check-history .history-transmission{width:min(72%,230px)}
+}
+.garden-hero::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;background:url('/media/starfield.svg') center/1000px auto;opacity:.7;mask-image:linear-gradient(90deg,#000 0%,#000 22%,transparent 64%)}
+.profile-page .calendar-intro h2{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:-.022em;line-height:.9}
+
+/* Zinnia credit is a real caption, beneath the full-bleed flower. */
+.zinnia-caption{position:relative;z-index:1;width:min(100% - clamp(34px,8vw,120px),1320px);margin:0 auto;padding:0 0 18px;padding-left:49%;color:#d5c9bb;text-align:right;font-size:clamp(.73rem,1.15vw,.88rem)}
+.zinnia-caption a{color:#efd0ac;white-space:nowrap;text-decoration:underline;text-underline-offset:3px;margin-left:4px}
+.garden-profile-link{margin-top:24px}
+
+.mission-journal{position:relative;isolation:isolate;scroll-margin-top:calc(var(--site-header-height) + 14px);border-block:1px solid #385374;background:linear-gradient(105deg,#060b19ab,#080b2260 58%,#06081c28),url('/media/mission-journal.webp') center 56%/cover,#081424}
+.journal-content{padding-block:clamp(54px,8vw,106px)}
+.journal-intro>.micro{display:flex;align-items:center;gap:7px;color:#b8d8ef}
+.journal-intro h2{font:700 clamp(3.6rem,8vw,7.2rem)/.89 var(--display);text-transform:uppercase;letter-spacing:-.02em;margin-top:11px}
+.journal-intro p{color:#d5e3ef;margin-top:14px}
+.journal-notebook{width:min(100%,830px);margin-top:27px;padding:clamp(14px,3.5vw,34px);border:1px solid #496781;border-radius:15px;background:transparent;box-shadow:0 22px 80px -40px #000}
+.journal-current{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:16px}
+.journal-current h3{font-size:clamp(1.12rem,3vw,1.6rem);letter-spacing:-.035em}
+.journal-current span{color:#9dc2df;text-align:right}
+.journal-entry label{display:block;margin-bottom:7px;color:#aac6df;font-size:.79rem}
+.journal-entry textarea,.journal-entry-body{display:block;width:100%;min-height:140px;padding:clamp(12px,2vw,18px);border:1px solid #436583;border-radius:9px;background:#0b2040;color:#f1f7ff;font:inherit;line-height:1.62;overflow-wrap:anywhere}
+.journal-entry textarea{resize:vertical}
+.journal-notebook > .journal-entry textarea,.journal-notebook > .journal-entry .journal-entry-body{background:transparent;border-color:#91acc47a;text-shadow:0 1px 4px #030612}
+.journal-notebook > .journal-entry textarea::placeholder{color:#cadbec}
+.journal-entry textarea::placeholder{color:#a2bed8}
+.journal-entry-body{white-space:pre-wrap}
+.journal-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.journal-delete{background:#361c2b;color:#ffd2d7;border-color:#995c71}
+.journal-delete:hover{background:#4e2336}
+.journal-delete-prompt{margin-top:12px;padding:11px 13px;border-radius:8px;background:#271a31}
+.journal-delete-prompt p{color:#ffdce3}
+.journal-feedback{display:block;color:var(--mint);font-size:.83rem;margin-top:7px}
+.journal-feedback:empty{display:none}
+.journal-history{border-top:1px solid #3a526d;margin-top:20px;padding-top:17px}
+.journal-history-list{margin-top:14px}
+.past-journal{padding:11px 12px;border:1px solid #3a5976;border-radius:8px;background:#0a172b}
+.past-journal+.past-journal{margin-top:7px}
+.past-journal summary{font-weight:700;color:#e5f1fa}
+.past-journal[open] summary{margin-bottom:12px}
+.profile-demo-day{padding-top:22px}
+.profile-demo-day .micro{color:var(--amber)}
+@media(max-width:620px){.zinnia-caption{padding-left:0;text-align:left}.journal-content{padding-block:44px}.journal-notebook{margin-top:19px}}

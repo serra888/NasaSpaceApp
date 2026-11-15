@@ -11,7 +11,6 @@
 .brand svg,.brand-footer svg{color:var(--ice)}.hero-watermark{position:absolute;left:50%;top:63%;transform:translate(-50%,-50%);font-size:min(19vw,18rem);font-weight:780;letter-spacing:-.085em;line-height:1;color:#e7f3ff09;pointer-events:none;white-space:nowrap}
 .portrait{position:absolute;width:min(57vw,calc(98svh * .959),740px);aspect-ratio:614/640;bottom:-5.3%;left:50%;transform:translateX(-50%);pointer-events:none;z-index:1}
 .portrait-img{position:absolute;inset:0;width:100%;height:100%;mask-image:radial-gradient(ellipse 49% 59% at 50% 49%,#000 84%,transparent 100%)}
-.helmet-stage{position:absolute;width:53%;height:48%;left:24.05%;top:2.2%;pointer-events:none}
 .hero-copy{width:min(90%,1420px);position:absolute;z-index:3;top:27%;left:50%;transform:translateX(-50%);display:grid;grid-template-columns:1fr 1.5fr 1fr;align-items:start;pointer-events:none}
 .hero-copy h1{font-size:clamp(2.3rem,4.05vw,4.55rem);font-weight:640;letter-spacing:-.074em;max-width:12ch;text-shadow:0 2px 24px #04070b}
 .hero-copy p{grid-column:3;justify-self:end;padding-top:.3rem;text-shadow:0 2px 12px #04070b;font-size:clamp(.875rem,1.32vw,1.22rem);line-height:1.62}
@@ -100,6 +99,37 @@
 #daily-check-in:focus-visible,#missions:focus-visible{outline:2px solid var(--ice);outline-offset:4px}
 @media(min-width:1024px){.companion-stage{height:clamp(335px,calc(100svh - 265px),550px)}}
 @media(min-width:1024px) and (max-height:600px){.companion-stage{height:clamp(150px,calc(100svh - 255px),320px)}}
-.helmet-stage[data-ready="false"]{visibility:hidden}
-.helmet-stage-photo{width:45.603%;height:46.875%;left:27.850%;top:3.90625%}
-.photo-helmet{display:block;transform-origin:50% 90%;will-change:transform}
+.helmet-stage-photo{position:absolute;width:45.603%;height:46.875%;left:27.850%;top:3.90625%;pointer-events:none;visibility:hidden}
+.hero[data-tracking] .helmet-stage-photo{visibility:visible}
+.hero[data-tracking] .astronaut-photo{mask:url(#suit-mask)}
+.photo-helmet{display:block;width:100%;height:100%;transform-origin:50% 90%}
+
+/* Shared, fixed navigation on both Orbitone pages. */
+:root{--site-header-height:68px}
+.site-header{position:fixed;z-index:40;inset:0 0 auto;height:var(--site-header-height);background:#060b17f2;border-bottom:1px solid #a6b6d128}
+.site-header-inner{height:100%;width:min(100% - clamp(32px,9vw,144px),1320px);margin-inline:auto;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.site-brand{display:inline-flex;gap:9px;align-items:center;white-space:nowrap;color:var(--text);font-size:.89rem;letter-spacing:.22em;font-weight:800}
+.site-brand svg{color:var(--ice);flex:none}
+.site-header nav{display:flex;align-items:center;gap:clamp(14px,3.2vw,44px);height:100%}
+.site-header nav a{height:100%;display:inline-grid;place-items:center;padding-inline:4px;position:relative;color:#c8d4e6;font-size:.85rem;font-weight:650}
+.site-header nav a:hover,.site-header nav a[aria-current=page]{color:var(--text)}
+.site-header nav a[aria-current=page]::after{position:absolute;content:"";height:2px;background:var(--ice);bottom:0;left:4px;right:4px}
+.skip{position:fixed;z-index:41}
+#status,#insight,#missions,#destinations,#mission-calendar,#sleep-trend,#mood-trend,#trends,#review,#daily-check-in{scroll-margin-top:calc(var(--site-header-height) + 14px)}
+@media(max-width:620px){:root{--site-header-height:57px}.site-brand{letter-spacing:.14em;font-size:.79rem}.site-brand svg{width:20px}}
+
+/* Welcome copy stays beside the astronaut. */
+.hero-side{min-width:0}
+.hero-side-left{grid-column:1}
+.hero-side-right{grid-column:3;justify-self:end}
+.home-personal-missions{margin-top:12px}
+.home-personal-missions .mission-card{min-height:148px}
+.home-personal-missions .mission-actions{padding-top:12px}
+@media(max-width:767px){
+ .hero-copy{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(12px,4vw,26px);top:max(14%,calc(var(--site-header-height) + 30px));text-align:left;align-items:stretch}
+ .hero-side{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:10px}
+ .hero-side-right{grid-column:2;justify-self:stretch}
+ .hero-copy h1{font-size:clamp(1.52rem,5.1vw,2.75rem);line-height:1.04}
+ .hero-copy .hero-side-right p{padding:0;margin:0;font-size:clamp(.82rem,2.45vw,1.02rem)}
+ .hero-copy .hero-side-right p br{display:initial}
+}

@@ -1,0 +1,130 @@
+.orbit-trends{--lunar-line:#34445f;--lunar-warm:#ed9169;--lunar-ink:#07101f;background:#060a14;color:var(--text);overflow:clip}
+.trends-shell{width:min(100% - clamp(34px,8vw,120px),1320px);margin-inline:auto}
+.lunar-header{position:relative;margin-bottom:26px}.lunar-kicker{color:#d9e0ec;letter-spacing:.21em}.lunar-kicker span{color:var(--lunar-warm);margin-right:8px}
+.calendar-intro{display:flex;justify-content:space-between;align-items:end;gap:22px}
+.lunar-index{min-width:145px;border-left:1px solid #ed916980;padding:6px 0 5px 15px;color:var(--sub)}.lunar-index b{display:block;color:var(--text);font-size:1.15rem}
+.lunar-mission-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.lunar-task{padding:clamp(15px,2.3vw,27px);min-height:185px;display:flex;flex-direction:column;border:1px solid var(--lunar-line);border-radius:15px;background:#101a2a}.lunar-task[data-picked=true]{border-color:var(--ice);background:#142638}
+.lunar-task-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#ed9169;margin-bottom:15px}
+.lunar-task h3{font-size:clamp(1.18rem,2.1vw,1.7rem);letter-spacing:-.04em;line-height:1.12}.lunar-task p{font-size:.89rem;margin-top:7px}
+.lunar-task-actions{margin-top:auto;padding-top:15px;display:flex;align-items:center;gap:11px;flex-wrap:wrap;font-size:.82rem}.lunar-task-actions button{color:var(--ice);font-weight:700}.lunar-task-actions label{display:flex;align-items:center;gap:6px;color:var(--sub);cursor:pointer}
+.lunar-task-actions input,.day-checklist input{accent-color:#5be0ae;width:17px;height:17px;flex-shrink:0}
+.personal-mission{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px 22px;align-items:center;margin-top:18px;padding:18px;border:1px solid var(--lunar-line);border-radius:12px;background:#101a2a}.personal-mission label{font-size:1.1rem;color:var(--text);font-weight:720}.personal-mission p{font-size:.83rem}.personal-mission .saved{grid-column:1/-1;color:var(--mint)}
+.personal-mission-fields{display:flex;gap:7px;justify-content:end}.personal-mission-fields input{min-width:0;width:min(100%,370px);padding:9px 12px;color:var(--text);border:1px solid var(--lunar-line);border-radius:8px;background:#0a1424}.personal-mission-fields button{flex-shrink:0}.personal-mission-fields button:disabled{opacity:.56;cursor:not-allowed}
+.trends-calendar-cue,.mission-cue{display:flex;gap:9px;align-items:center;flex-wrap:wrap;color:var(--ice);margin-top:16px}.trends-calendar-cue p{display:flex;gap:6px;align-items:center;color:var(--ice)}
+.calendar-intro{margin-bottom:22px}.calendar-intro h2,.lunar-history h2{font-size:clamp(2.75rem,6.7vw,6rem);margin-top:10px}.calendar-pager{display:flex;gap:4px;align-items:center;flex-shrink:0}.calendar-pager button{border:1px solid var(--lunar-line);border-radius:6px;background:#101c2e;padding:6px 9px;min-height:39px;color:var(--text);font-size:.8rem}.calendar-pager button:first-child,.calendar-pager button:last-child{font-size:1.3rem;line-height:1;min-width:35px}.calendar-pager button:hover{border-color:var(--ice);color:var(--ice)}
+.calendar-paper{display:grid;grid-template-columns:minmax(148px,22%) minmax(0,1fr);padding:clamp(12px,2vw,25px);gap:18px;border:1px solid #8093ad;border-radius:12px;background:#dfe8ee;color:#142234}
+.month-plate{position:relative;overflow:hidden;isolation:isolate;padding:15px 5px 12px 11px;display:flex;min-height:185px;flex-direction:column;border-right:1px solid #7d8c9e65}
+.month-plate>span:first-child{font:700 .97rem var(--mono);letter-spacing:.22em}.month-plate strong{z-index:1;text-transform:uppercase;font-family:var(--display);font-size:clamp(1.9rem,4.3vw,4.6rem);letter-spacing:-.025em;line-height:1.1}
+.month-plate img{position:absolute;left:-39%;bottom:-18%;width:190%;max-width:none;height:auto;opacity:.86;mix-blend-mode:multiply}
+.month-plate .month-plate-caption{z-index:1;position:absolute;bottom:11px;font:700 .64rem var(--mono);letter-spacing:.14em;color:#18283c;text-shadow:0 0 9px #fff}
+.calendar-table{min-width:0}.calendar-week,.calendar-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}.calendar-week{font-size:.75rem;font-weight:670;text-align:center;padding-bottom:8px;font-family:var(--mono)}
+.calendar-days{border-top:1px solid #8696a8;border-left:1px solid #8696a8}
+.calendar-day,.calendar-empty-cell{min-width:0;min-height:clamp(55px,7.1vw,110px);border:0;border-right:1px solid #8696a8;border-bottom:1px solid #8696a8}
+.calendar-day{padding:8px;display:flex;flex-direction:column;gap:7px;align-items:flex-start;text-align:left;color:#0e2034;background:#e9f0f4}.calendar-empty-cell{background:#d6e0e7}.calendar-day[data-recorded=true]{background:#d2e3e7}.calendar-day[data-complete=true]{background:#cce6db}.calendar-day:hover,.calendar-day:focus-visible{position:relative;background:#b4dbe5;outline:2px solid #315875;outline-offset:-2px}.calendar-day[aria-current=date]{box-shadow:inset 0 0 0 2px #217489}.calendar-number{font-size:.9rem;font-weight:720;line-height:1.05}.calendar-progress{display:flex;align-items:center;gap:4px;color:#163e58;font:700 .7rem var(--mono)}.calendar-progress i,.calendar-key i{width:6px;height:6px;border-radius:50%;background:#458aa4;display:inline-block}.calendar-day[data-complete=true] i,.calendar-key i.finished{background:#2c8966}
+.calendar-key{display:flex;gap:12px;flex-wrap:wrap;margin-top:13px;color:var(--sub);font-size:.73rem}.calendar-key span{display:inline-flex;align-items:center;gap:5px}.calendar-key span:last-child{margin-left:auto}
+.mission-day-dialog{position:fixed;inset:0;margin:auto;padding:0;border:1px solid #ed916977;border-radius:16px;width:min(94vw,590px);max-height:87dvh;color:var(--text);background:#101d31;box-shadow:0 30px 100px #03060caa}
+.mission-day-dialog::backdrop{background:#050b16a8;backdrop-filter:blur(8px)}.mission-day-dialog[open]{animation:calendar-focus .22s ease-out both}@keyframes calendar-focus{from{transform:translateY(12px) scale(.95);opacity:.7}to{transform:none;opacity:1}}
+.mission-day-panel{padding:clamp(16px,4vw,31px)}.mission-day-top{display:flex;justify-content:space-between;align-items:center;gap:8px}.mission-day-panel h3{font-size:clamp(1.9rem,5.1vw,3.3rem);margin-bottom:9px}.day-modal-count{padding-top:16px;color:var(--mint);font-weight:700}.day-checklist{display:grid;gap:8px;padding:14px 0;margin-top:10px;border-top:1px solid var(--lunar-line)}.day-checklist label{display:flex;align-items:center;gap:10px;min-height:38px;font-size:.92rem;color:#d7e3f1;cursor:pointer}.day-modal-empty{padding:20px 0}.mission-day-panel>.button{margin-top:8px}
+.lunar-history>.charts-grid{margin-top:28px}.trends-footer{border-top:1px solid var(--lunar-line);display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding-block:20px 30px}.trends-footer .caption{margin:0}
+@media(max-width:820px){.lunar-mission-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.calendar-paper{grid-template-columns:minmax(116px,22%) minmax(0,1fr);gap:12px}.calendar-day{padding:6px}.calendar-key span:last-child{margin-left:0}}
+@media(max-width:620px){
+ .calendar-intro{align-items:flex-start;flex-direction:column;gap:13px}.lunar-mission-grid{grid-template-columns:1fr;gap:9px}.lunar-task{min-height:135px}.personal-mission{grid-template-columns:1fr;padding:13px;gap:10px}.personal-mission-fields{justify-content:flex-start}
+ .calendar-paper{grid-template-columns:1fr;padding:8px;gap:7px}.month-plate{border:0;border-bottom:1px solid #7d8c9e65;padding:7px 9px;min-height:105px}.month-plate img{left:auto;right:-4%;top:-68px;width:58%;bottom:auto}.month-plate .month-plate-caption{bottom:10px}.month-plate strong{font-size:1.9rem}.calendar-week{font-size:.6rem;padding-bottom:5px}.calendar-day,.calendar-empty-cell{min-height:49px}.calendar-day{padding:5px 3px;gap:7px}.calendar-number{font-size:.77rem}.calendar-progress{font-size:.61rem}.calendar-progress i{width:4px;height:4px}
+}
+@media(max-width:360px){.personal-mission-fields{flex-wrap:wrap}}
+
+@font-face{font-family:Orbit Display;src:url('/media/orbit-display.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
+.orbit-trends{--display:'Orbit Display',Impact,'Arial Narrow',sans-serif;--paper:#faf9f7;--dark-copy:#475164;--ember:#fa7546}
+.trends-rule{position:relative;width:min(190px,32vw);height:1px;background:#e878536c;margin:0 0 18px}
+.trends-rule::before{content:"";position:absolute;inset:-1px auto -1px 0;width:31%;background:var(--ember)}
+.trends-brand{display:inline-flex;align-items:center;gap:9px;color:var(--text);font-weight:800;letter-spacing:.19em;font-size:.85rem}
+.trends-brand svg{color:var(--ice)}
+.trends-flight-deck{position:relative;isolation:isolate}
+.trends-opening{position:relative;background:radial-gradient(ellipse at 80% 70%,#244a574f,transparent 42%),radial-gradient(ellipse at 26% 43%,#6f361c56,transparent 35%),linear-gradient(180deg,#03091630 58%,#17132765),url('/media/starfield.svg') center 43%/1050px auto,#060d1a}
+.trends-opening::after{content:"";position:absolute;inset:auto 0 0;height:80px;background:linear-gradient(0deg,#64537846,transparent);pointer-events:none}
+.trends-hero-inner{display:grid;align-items:center;min-height:clamp(480px,56vw,715px);padding-block:calc(var(--site-header-height) + 64px) 61px}
+.trends-hero-copy{position:relative;z-index:2;justify-self:start}
+.trends-hero-kicker{color:#e3c9bd;margin-bottom:14px}
+.trends-opening h1,.orbit-trends h2,.mission-activities-head h3{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:-.022em}
+.trends-opening h1{font-size:clamp(7rem,13vw,13rem);line-height:.82;letter-spacing:-.025em;color:#fff;text-shadow:0 8px 38px #e47b3a4d}
+.trends-opening h1 span{display:block;margin-top:.1em;color:#131925;-webkit-text-stroke:1px #c6d6ee91;text-shadow:none}
+.trends-hero-summary{margin-top:25px;color:#d2d8e6;font-size:clamp(.86rem,1.65vw,1.1rem);max-width:34ch}
+.trends-explore{display:inline-flex;align-items:center;gap:9px;margin-top:24px;color:#e2e9f4;font:700 .69rem var(--mono);text-transform:uppercase;letter-spacing:.06em}
+.trends-explore>span{display:grid;place-items:center;width:35px;height:35px;border:1px solid #8a9cb8;border-radius:50%}
+.trends-explore:hover>span{border-color:var(--ice);color:var(--ice)}
+.destination-astronaut{position:absolute;z-index:1;top:clamp(110px,13vw,190px);right:clamp(-46px,2vw,58px);width:clamp(360px,37vw,615px);height:auto;transform:scaleX(-1);filter:drop-shadow(10px 20px 44px #0a152455);pointer-events:none}
+.trends-light{background:var(--paper);color:var(--lunar-ink)}
+.trends-light p{color:var(--dark-copy)}
+.destinations-band{min-height:clamp(330px,33vw,495px);padding-block:clamp(52px,7vw,111px) 52px}
+.destinations-copy{position:relative;z-index:2;width:min(48%,500px)}
+.destinations-copy h2{font-size:clamp(2.9rem,5.4vw,5rem);line-height:.9}
+.destinations-copy p{margin-top:15px;font-size:.84rem}
+.planet-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:15px}
+.planet-link{display:grid;align-content:start;gap:7px;min-width:0;color:var(--lunar-ink);padding-bottom:9px;border-bottom:1px solid #b0b9c3}
+.planet-picture{position:relative;display:grid;place-items:center;overflow:hidden;aspect-ratio:1.6;background:radial-gradient(ellipse at 44% 58%,#222b38,#060b12 72%);border-bottom:2px solid var(--ember)}
+.planet-picture img{width:68%;height:100%;object-fit:contain;position:absolute;inset:0;margin:auto;transition:transform .2s ease}
+.planet-picture.planet-02 img{width:98%;height:140%;top:-20%;mask-image:radial-gradient(ellipse at center,#000 41%,#000e 49%,transparent 67%)}
+.planet-link:hover img{transform:scale(1.07)}
+.planet-link-title{display:flex;align-items:center;gap:7px;font-weight:750;font-size:clamp(.74rem,1.18vw,.91rem);line-height:1.2;padding-inline:2px}
+.planet-link-title b{color:#a7391d;font:700 .7rem var(--mono);flex:none}
+.planet-link-title svg{margin-left:auto;flex:none}
+.trends-light a:focus-visible,.trends-light button:focus-visible{outline-color:#13546e}
+.trends-starfield{background:linear-gradient(180deg,#060a14aa,transparent 35%,#0509118a),url('/media/starfield.svg') center top/1060px auto repeat,#070e1b}
+.lunar-missions,.lunar-calendar,.lunar-history{padding-block:clamp(63px,9vw,122px)}
+.lunar-missions{padding:0}
+.mission-prologue-inner{position:relative;display:grid;grid-template-columns:minmax(0,1.16fr) minmax(0,.84fr);align-items:end;gap:7%;min-height:clamp(236px,30vw,390px);padding-bottom:42px}
+.trends-watermark{position:absolute;pointer-events:none;inset:-.14em auto auto -.03em;font:700 clamp(7rem,22vw,16rem)/.9 var(--display);letter-spacing:-.02em;color:#0b193614}
+.mission-prologue .lunar-header{padding-top:45px;margin:0;z-index:1}
+.mission-prologue .lunar-header .trends-rule{margin-block:10px 14px}
+.mission-prologue .lunar-header h2{font-size:clamp(3.2rem,8vw,7.7rem);line-height:.87}
+.mission-prologue p{margin-top:17px}
+.trends-light .lunar-kicker,.trends-light .accent{color:#46566b}
+.trends-light .lunar-kicker span{color:#a7391d}
+.mission-horizon{isolation:isolate;position:relative;transform:translateY(70px);z-index:1;overflow:hidden;aspect-ratio:1.69;background:#111925;box-shadow:0 15px 38px #06091431}
+.mission-horizon img{width:100%;height:100%;object-fit:cover;object-position:50% 68%}
+.mission-activities{padding-block:clamp(68px,8vw,118px)}
+.mission-activities-head{display:flex;justify-content:space-between;align-items:end;gap:18px;margin-bottom:23px}
+.mission-activities-head h3{font-size:clamp(2rem,4.5vw,3.7rem);line-height:.95}
+.trends-calendar-band{position:relative;isolation:isolate;overflow:clip}
+.trends-calendar-band::before{content:"FLIGHT LOG";position:absolute;z-index:-1;top:1.3rem;right:-.03em;pointer-events:none;color:#0b193611;white-space:nowrap;font:700 clamp(5rem,18vw,14rem)/.8 var(--display)}
+.trends-calendar-band .calendar-intro p{margin-top:12px}
+.trends-calendar-band .calendar-key{color:#40516b}
+.trends-calendar-band .calendar-paper{background:#f5f7f7}
+.trends-calendar-band .calendar-day{background:#fafcfc}
+.trends-calendar-band .calendar-day[data-recorded="true"]{background:#e5eff4}
+.trends-calendar-band .calendar-day[data-complete="true"]{background:#d8eee1}
+.trends-calendar-band .calendar-day:hover,.trends-calendar-band .calendar-day:focus-visible{background:#cbe9ef}
+.trends-calendar-band .mission-day-dialog p{color:var(--sub)}
+.trends-calendar-band .mission-day-dialog .day-modal-count{color:var(--mint)}
+.history-prologue{display:grid;grid-template-columns:minmax(0,1fr) minmax(170px,30%);align-items:center;gap:clamp(24px,7vw,90px)}
+.history-prologue h2{line-height:.92}
+.history-prologue p{margin-top:13px;max-width:54ch}
+.history-transmission{position:relative;margin:0;background:#0b1120;box-shadow:0 14px 54px #05071166;overflow:hidden}
+.history-transmission img{display:block;width:100%;height:clamp(190px,26vw,345px);object-fit:cover;object-position:50% 36%}
+.history-transmission figcaption{position:absolute;bottom:0;left:0;padding:20px 11px 8px;width:100%;color:#f3f5fa;background:linear-gradient(transparent,#080e1af2)}
+@media(max-width:900px){
+ .trends-opening h1{font-size:clamp(5rem,14vw,8.7rem)}
+ .destination-astronaut{top:145px;right:-15px;width:clamp(290px,43vw,390px)}
+}
+@media(max-width:620px){
+ .trends-hero-inner{min-height:525px;padding-block:calc(var(--site-header-height) + 40px) 78px;align-items:start}
+ .trends-opening h1{font-size:clamp(4.3rem,15vw,5.9rem)}
+ .trends-hero-summary{max-width:22ch}
+ .trends-explore{margin-top:18px;font-size:.63rem}
+ .trends-hero-kicker{font-size:.6rem}
+ .destination-astronaut{top:235px;right:-34px;width:clamp(200px,50vw,300px)}
+ .destinations-band{padding-block:47px 34px;min-height:290px}
+ .destinations-copy{width:min(66%,285px)}
+ .planet-links{gap:7px}
+ .planet-link-title{font-size:.71rem;gap:4px}
+ .planet-link-title svg{width:12px}
+ .mission-prologue-inner{grid-template-columns:1fr;gap:18px;padding-bottom:0}
+ .mission-prologue .lunar-header{padding-top:20px}
+ .mission-horizon{width:84%;margin-left:auto;transform:translateY(30px);aspect-ratio:1.95}
+ .mission-activities{padding-block:62px 64px}
+ .mission-activities-head{align-items:flex-start;flex-direction:column;gap:13px}
+ .history-prologue{grid-template-columns:1fr;gap:21px}
+ .history-transmission{width:83%;margin-left:auto}
+}
+@media(prefers-reduced-motion:reduce){.planet-picture img{transition:none}.mission-day-dialog[open]{animation:none}}

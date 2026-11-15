@@ -7,7 +7,7 @@ const creator='https://sketchfab.com/better_peter'
 const license='https://creativecommons.org/licenses/by/4.0/'
 const poster='/media/mercenary-astronaut-poster.webp'
 
-export function Guide({visible,message,action,open,setOpen}){
+export function Guide({visible,message,action,navigate,open,setOpen}){
   const [minimized,setMinimized]=useState(false)
   const [showViewer,setShowViewer]=useState(false)
   const frameRef=useRef(null)
@@ -15,6 +15,7 @@ export function Guide({visible,message,action,open,setOpen}){
 
   function followAction(e){
     if(e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return
+    if(action.href&&navigate){e.preventDefault();navigate(action.href);return}
     const target=document.getElementById(action.target)
     if(!target)return
     e.preventDefault()
@@ -42,7 +43,7 @@ export function Guide({visible,message,action,open,setOpen}){
       {open&&message?<div className="speech">
         <div className="speech-content">
           <p role="status">{message}</p>
-          {action&&<a className="button primary companion-cta" href={'#'+action.target} onClick={followAction}>{action.label}<Icon name="right" size={15}/></a>}
+          {action&&<a className="button primary companion-cta" href={action.href||'#'+action.target} onClick={followAction}>{action.label}<Icon name="right" size={15}/></a>}
         </div>
         <button type="button" className="icon-button" aria-label="Dismiss message" onClick={()=>setOpen(false)}><Icon name="close" size={16}/></button>
       </div>:message&&<button type="button" className="companion-replay" onClick={()=>setOpen(true)}>Replay last message <Icon name="right" size={14}/></button>}
