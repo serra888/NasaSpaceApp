@@ -24,7 +24,7 @@ function integerEnv(name, fallback, min, max) {
 export const config = Object.freeze({
   port: integerEnv("PORT", 3001, 1, 65535),
   geminiApiKey: process.env.GEMINI_API_KEY?.trim() ?? "",
-  geminiModel: process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash-lite",
+  geminiModel: process.env.GEMINI_MODEL?.trim() || "gemini-3.1-flash-lite",
   geminiTimeoutMs: integerEnv("GEMINI_TIMEOUT_MS", 8000, 1000, 30000),
   aiServiceToken: process.env.AI_SERVICE_TOKEN?.trim() ?? ""
 });

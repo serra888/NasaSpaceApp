@@ -24,6 +24,7 @@ test("backend selector keeps the key server-side and sends only a constrained sc
   assert.equal(observed.url.includes("server-secret"), false);
   assert.equal(observed.options.headers["x-goog-api-key"], "server-secret");
   assert.equal(observed.options.redirect, "error");
+  assert.equal(observed.body.generationConfig.thinkingConfig.thinkingLevel, "minimal");
   assert.equal(ids.includes("medical_review"), false);
   assert.equal(observed.body.generationConfig.responseJsonSchema.properties.tasks.minItems, 3);
   assert.equal(observed.body.generationConfig.responseJsonSchema.properties.tasks.maxItems, 3);

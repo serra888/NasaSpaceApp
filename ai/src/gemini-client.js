@@ -37,6 +37,7 @@ export class GeminiClient {
           generationConfig: {
             temperature: 0.2,
             maxOutputTokens: 240,
+            thinkingConfig: { thinkingLevel: "minimal" },
             responseMimeType: "application/json",
             responseJsonSchema: selectionSchema(context)
           }

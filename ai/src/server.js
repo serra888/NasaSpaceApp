@@ -31,16 +31,16 @@ async function readJson(request) {
   }
 }
 
-function hasValidServiceToken(request) {
-  if (!config.aiServiceToken) return true;
-  return request.headers.authorization === `Bearer ${config.aiServiceToken}`;
+function hasValidServiceToken(request, serviceToken) {
+  if (!serviceToken) return true;
+  return request.headers.authorization === `Bearer ${serviceToken}`;
 }
 
 function isJsonRequest(request) {
   return request.headers["content-type"]?.split(";", 1)[0].trim().toLowerCase() === "application/json";
 }
 
-export function createServer() {
+export function createServer({ client = geminiClient, serviceToken = config.aiServiceToken } = {}) {
   return http.createServer(async (request, response) => {
     const url = new URL(request.url, "http://localhost");
 
@@ -53,7 +53,7 @@ export function createServer() {
     }
 
     if (request.method === "POST" && url.pathname === "/generate-missions") {
-      if (!hasValidServiceToken(request)) {
+      if (!hasValidServiceToken(request, serviceToken)) {
         return sendJson(response, 401, { error: { code: "UNAUTHORIZED", message: "Invalid service token" } });
       }
       if (!isJsonRequest(request)) {
@@ -68,7 +68,7 @@ export function createServer() {
             error: { code: "UNSAFE_OR_INSUFFICIENT_CONTEXT", message: "Backend fallback is required" }
           });
         }
-        const selection = validateTaskSelection(await geminiClient.selectTasks(context), context);
+        const selection = validateTaskSelection(await client.selectTasks(context), context);
         return sendJson(response, 200, selection);
       } catch (error) {
         if (error instanceof ContractError) {
