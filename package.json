@@ -1,0 +1,15 @@
+{
+  "name": "orbitone-ai-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Backend-only Gemini integration for Orbitone astronaut daily missions",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node ai-service/src/server.js",
+    "dev": "node --watch ai-service/src/server.js",
+    "test": "node --test ai-service/test/*.test.js"
+  }
+}
