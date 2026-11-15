@@ -1,73 +1,105 @@
-# Orbitone AI API Contract
+# Orbitone Backend ↔ AI Contract
 
-This file is the integration boundary for mobile/web and backend developers. The AI service owns all Gemini calls. Client applications must never call Gemini directly or receive `GEMINI_API_KEY`.
+This document mirrors the backend branch contract version `1.0` for the AI implementation. The backend remains the source of truth for persistence, scores, live simulator data, approved task titles, fallback behavior, and task completion.
 
-## `POST /api/ai/daily-missions`
+## Runtime flow
 
-Request (`Content-Type: application/json`):
+1. The backend simulator writes a new demo sensor measurement to PostgreSQL every five seconds.
+2. The frontend polls backend `GET /api/v1/status` every five seconds and displays the latest persisted reading.
+3. A check-in or explicit mission refresh makes the backend call this AI service.
+4. The AI service selects exactly three approved task template IDs.
+5. The backend validates the selection, renders its own approved titles, persists the tasks, and returns them to the frontend.
 
-```json
-{
-  "astronautId": "astro-7",
-  "displayName": "Alex",
-  "mood": "focused",
-  "energyLevel": 4,
-  "sleepHours": 7.5,
-  "stressLevel": 2,
-  "hasDiscomfort": false,
-  "constraints": ["Avoid loud activities"],
-  "preferences": ["Short focus exercises"],
-  "locale": "en"
-}
+The frontend never calls this service or Gemini directly. Sensor polling does not trigger AI generation.
+
+## `POST /generate-missions`
+
+Set the backend's full `AI_SERVICE_URL` to:
+
+```text
+http://127.0.0.1:3001/generate-missions
 ```
 
-Rules:
+If `AI_SERVICE_TOKEN` is configured on the AI service, the backend must send the same value as `Authorization: Bearer <token>`.
 
-- `mood`: `calm | focused | tired | stressed | low`
-- `energyLevel`, `stressLevel`: number from 1 through 5
-- `sleepHours`: number from 0 through 24
-- `constraints`, `preferences`: optional arrays, maximum 5 short strings each
-- `locale`: optional; `tr` and `tr-*` receive Turkish deterministic fallback copy, all other values fall back to English
-
-Success response (`200`):
+### Request
 
 ```json
 {
-  "missions": [
-    {
-      "id": "mission-1",
-      "title": "Water pause",
-      "description": "Follow your normal onboard hydration plan.",
-      "durationMinutes": 3,
-      "category": "hydration"
-    }
+  "contract_version": "1.0",
+  "astronaut_id": "orbiton-demo",
+  "mission_date": "2026-11-15",
+  "health": {
+    "value": 82,
+    "used_fields": ["heart_rate", "spo2", "sleep_hours"],
+    "missing_fields": [],
+    "calculated_at": "2026-11-15T09:00:00Z",
+    "observed_at": "2026-11-15T08:59:59Z",
+    "stale": false,
+    "is_demo": true
+  },
+  "mood": {
+    "value": 56,
+    "used_fields": ["mood", "stress", "energy", "loneliness"],
+    "missing_fields": [],
+    "calculated_at": "2026-11-15T09:00:00Z",
+    "observed_at": "2026-11-15T08:58:00Z",
+    "stale": false,
+    "is_demo": true
+  },
+  "latest_measurement": {
+    "id": "measurement-demo",
+    "astronaut_id": "orbiton-demo",
+    "measured_at": "2026-11-15T08:59:59Z",
+    "heart_rate": 72,
+    "spo2": 98,
+    "sleep_hours": 6.2,
+    "steps": 1200,
+    "body_temperature_c": 36.7,
+    "source": "simulator"
+  },
+  "check_in": { "mood": 3, "stress": 4, "energy": 2, "loneliness": 3 },
+  "alerts": [],
+  "task_catalog": [
+    { "template_id": "quiet_rest", "category": "rest", "title": "Take a five-minute quiet rest break." },
+    { "template_id": "breathing_pause", "category": "breathing", "title": "Take a short, comfortable breathing break." },
+    { "template_id": "positive_moment", "category": "reflection", "title": "Write down one positive moment from today." },
+    { "template_id": "crew_connection", "category": "social", "title": "Check in with a crew member for a few minutes." }
   ],
-  "statusMessage": "Alex, today's plan keeps things short, safe, and achievable.",
-  "source": "gemini",
-  "generatedAt": "2026-10-04T09:00:00.000Z",
-  "safetyNotice": "Wellness guidance only; not medical advice or a diagnosis. Contact the mission medical team for health concerns."
+  "constraints": {
+    "task_count": 3,
+    "distinct_templates": true,
+    "no_diagnosis": true
+  }
 }
 ```
 
-`missions` always contains exactly 3 items. `source` is `gemini` or `fallback`; the client should render both identically. Categories are `hydration | movement | focus | connection | recovery`.
+Free-text symptoms and journals must not be sent. Contract validation rejects unexpected top-level and check-in fields.
 
-Invalid input response (`400`):
+### Success response
+
+The response contains no generated prose or additional keys:
 
 ```json
-{"error":{"code":"INVALID_INPUT","message":"energyLevel must be a number from 1 to 5"}}
+{
+  "tasks": [
+    { "template_id": "quiet_rest", "category": "rest" },
+    { "template_id": "breathing_pause", "category": "breathing" },
+    { "template_id": "crew_connection", "category": "social" }
+  ]
+}
 ```
 
-## `POST /api/ai/status-message`
+All three templates must be distinct, appear in the request catalog, and use the catalog's matching category. `medical_review` is reserved for backend routing and can never be selected by Gemini.
 
-Accepts the same request. Returns only `statusMessage`, `source`, `generatedAt`, and `safetyNotice`. This is available for surfaces that do not display the mission cards. Prefer the daily-missions response when both are needed, to avoid a second model call.
+### Errors and fallback
 
-## `GET /health`
+- `400 INVALID_CONTRACT`: request or generated selection violates contract `1.0`.
+- `401 UNAUTHORIZED`: configured service token is missing or incorrect.
+- `415 UNSUPPORTED_MEDIA_TYPE`: request is not `application/json`.
+- `422 UNSAFE_OR_INSUFFICIENT_CONTEXT`: alerts, stale scores, or missing health score require backend fallback.
+- `503 AI_UNAVAILABLE`: Gemini is not configured, times out, exceeds quota, or is unavailable.
 
-Returns service health and `aiMode`: `gemini-with-fallback` or `fallback-only`. It never reveals configuration secrets.
+For all non-2xx responses, the backend uses its deterministic fallback and records its own fallback reason. Provider response bodies and secrets are never returned.
 
-## Safety and failure behavior
-
-- Output is constrained by Gemini JSON Schema and validated again on the server. Explicit diagnosis or prescription language is rejected and replaced by the safe fallback.
-- The module provides general wellness prompts only. It must not diagnose, prescribe, or interpret symptoms.
-- Network errors, timeouts, quota responses, missing keys, malformed JSON, or invalid generated values automatically use a deterministic local fallback.
-- The API key is read only from the backend environment and is never logged or returned.
+`GET /health` reports `providerConfigured` and identifies the backend as the fallback owner without revealing secrets.

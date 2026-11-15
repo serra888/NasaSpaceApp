@@ -8,8 +8,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "start": "node ai-service/src/server.js",
-    "dev": "node --watch ai-service/src/server.js",
-    "test": "node --test ai-service/test/*.test.js"
+    "start": "node ai/src/server.js",
+    "dev": "node --watch ai/src/server.js",
+    "test": "node --test ai/test/*.test.js"
   }
 }

@@ -1,9 +1,7 @@
 import http from "node:http";
 import { config } from "./config.js";
-import { ContractError } from "./contracts.js";
-import { generateDailyPlan } from "./daily-plan.js";
 import { GeminiClient } from "./gemini-client.js";
-import { validateBackendContext, validateTaskSelection } from "./backend-contract.js";
+import { ContractError, validateBackendContext, validateTaskSelection } from "./backend-contract.js";
 
 const geminiClient = new GeminiClient({
   apiKey: config.geminiApiKey,
@@ -38,17 +36,30 @@ function hasValidServiceToken(request) {
   return request.headers.authorization === `Bearer ${config.aiServiceToken}`;
 }
 
+function isJsonRequest(request) {
+  return request.headers["content-type"]?.split(";", 1)[0].trim().toLowerCase() === "application/json";
+}
+
 export function createServer() {
   return http.createServer(async (request, response) => {
     const url = new URL(request.url, "http://localhost");
 
     if (request.method === "GET" && url.pathname === "/health") {
-      return sendJson(response, 200, { status: "ok", aiMode: config.geminiApiKey ? "gemini-with-fallback" : "fallback-only" });
+      return sendJson(response, 200, {
+        status: "ok",
+        providerConfigured: Boolean(config.geminiApiKey),
+        fallbackOwner: "backend"
+      });
     }
 
     if (request.method === "POST" && url.pathname === "/generate-missions") {
       if (!hasValidServiceToken(request)) {
         return sendJson(response, 401, { error: { code: "UNAUTHORIZED", message: "Invalid service token" } });
+      }
+      if (!isJsonRequest(request)) {
+        return sendJson(response, 415, {
+          error: { code: "UNSUPPORTED_MEDIA_TYPE", message: "Content-Type must be application/json" }
+        });
       }
       try {
         const context = validateBackendContext(await readJson(request));
@@ -69,37 +80,13 @@ export function createServer() {
         });
       }
     }
-
-    const isPlanRoute = url.pathname === "/api/ai/daily-missions";
-    const isStatusRoute = url.pathname === "/api/ai/status-message";
-    if (request.method !== "POST" || (!isPlanRoute && !isStatusRoute)) {
-      return sendJson(response, 404, { error: { code: "NOT_FOUND", message: "Route not found" } });
-    }
-
-    try {
-      const plan = await generateDailyPlan(await readJson(request), { geminiClient });
-      if (isStatusRoute) {
-        return sendJson(response, 200, {
-          statusMessage: plan.statusMessage,
-          source: plan.source,
-          generatedAt: plan.generatedAt,
-          safetyNotice: plan.safetyNotice
-        });
-      }
-      return sendJson(response, 200, plan);
-    } catch (error) {
-      if (error instanceof ContractError) {
-        return sendJson(response, 400, { error: { code: "INVALID_INPUT", message: error.message } });
-      }
-      console.error("Unexpected AI service error", error instanceof Error ? error.message : "unknown error");
-      return sendJson(response, 500, { error: { code: "INTERNAL_ERROR", message: "Unable to generate a daily plan" } });
-    }
+    return sendJson(response, 404, { error: { code: "NOT_FOUND", message: "Route not found" } });
   });
 }
 
 if (process.env.NODE_ENV !== "test") {
   createServer().listen(config.port, "127.0.0.1", () => {
     console.log(`Orbitone AI service listening on http://127.0.0.1:${config.port}`);
-    console.log(config.geminiApiKey ? "Gemini enabled with deterministic fallback" : "GEMINI_API_KEY missing; fallback-only mode enabled");
+    console.log(config.geminiApiKey ? "Gemini provider configured" : "GEMINI_API_KEY missing; backend fallback will be required");
   });
 }
