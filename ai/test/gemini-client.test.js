@@ -1,0 +1,55 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { GeminiClient } from "../src/gemini-client.js";
+import { validateBackendContext } from "../src/backend-contract.js";
+import { backendContext, backendContextV11 } from "./fixtures.js";
+
+test("backend selector keeps the key server-side and sends only a constrained schema", async () => {
+  let observed;
+  const client = new GeminiClient({
+    apiKey: "server-secret",
+    model: "gemini-test-model",
+    fetchImpl: async (url, options) => {
+      observed = { url, options, body: JSON.parse(options.body) };
+      return {
+        ok: true,
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: '{"tasks":[]}' }] } }]
+        })
+      };
+    }
+  });
+  await client.selectTasks(validateBackendContext(backendContext()));
+  const ids = observed.body.generationConfig.responseJsonSchema.properties.tasks.items.properties.template_id.enum;
+  assert.equal(observed.url.includes("server-secret"), false);
+  assert.equal(observed.options.headers["x-goog-api-key"], "server-secret");
+  assert.equal(observed.options.redirect, "error");
+  assert.equal(observed.body.generationConfig.thinkingConfig.thinkingLevel, "minimal");
+  assert.equal(ids.includes("medical_review"), false);
+  assert.equal(observed.body.generationConfig.responseJsonSchema.properties.tasks.minItems, 3);
+  assert.equal(observed.body.generationConfig.responseJsonSchema.properties.tasks.maxItems, 3);
+});
+
+test("contract 1.1 sends trend-aware instructions and requires reason codes", async () => {
+  let observed;
+  const client = new GeminiClient({
+    apiKey: "server-secret",
+    model: "gemini-test-model",
+    fetchImpl: async (url, options) => {
+      observed = { url, options, body: JSON.parse(options.body) };
+      return {
+        ok: true,
+        json: async () => ({ candidates: [{ content: { parts: [{ text: '{"tasks":[]}' }] } }] })
+      };
+    }
+  });
+  await client.selectTasks(validateBackendContext(backendContextV11()));
+  const schema = observed.body.generationConfig.responseJsonSchema.properties.tasks.items;
+  const instruction = observed.body.systemInstruction.parts[0].text;
+  const sentContext = observed.body.contents[0].parts[0].text;
+  assert.equal(schema.required.includes("reason_code"), true);
+  assert.equal(schema.properties.template_id.enum.includes("medium_demo_task"), false);
+  assert.equal(instruction.includes("trend_summary"), true);
+  assert.equal(sentContext.includes('"contract_version":"1.1"'), true);
+  assert.equal(sentContext.includes("private note"), false);
+});

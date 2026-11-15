@@ -1,7 +1,9 @@
-# Local secrets and Python artifacts
+# Local secrets
 .env
 .env.*
 !.env.example
+
+# Python/backend artifacts
 .venv/
 .windows-check/
 __pycache__/
@@ -10,3 +12,11 @@ __pycache__/
 .ruff_cache/
 .coverage
 htmlcov/
+
+# Node/AI/frontend artifacts
+node_modules/
+coverage/
+*.log
+
+# Operating-system artifacts
+.DS_Store
