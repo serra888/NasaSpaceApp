@@ -115,6 +115,8 @@ Demo review flags: SpO2 below 92, heart rate below 40 or above 130, temperature 
 
 ## Daily missions and AI
 
+AI contract rollout is controlled by `AI_CONTRACT_VERSION`. Version `1.0` is the default. Version `1.1` sends bounded trend enums and an approved low-intensity catalog, and validates a reason code for every AI-selected task. Apply the `0002` migration before using 1.1 so generated todo reason codes can be persisted. See [AI_CONTRACT_V1_1_PROPOSAL.md](AI_CONTRACT_V1_1_PROPOSAL.md) for the exact payload.
+
 Check-in creates a generation if none exists for the current mission day. Later check-ins update Mood but reuse that day's existing tasks. `force: false` returns the existing generation unchanged. Measurement polling never generates tasks.
 
 A generation returns `generation_id`, `mission_date`, `revision`, `source`, `fallback_reason`, and `tasks`. Each task includes `id`, `astronaut_id`, optional `generation_id`, `mission_date`, `title`, `category`, `source`, `completed`, `completed_at`, and `created_at`.

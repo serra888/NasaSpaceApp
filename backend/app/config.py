@@ -1,5 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 from zoneinfo import ZoneInfo
 
 from pydantic import Field, field_validator
@@ -18,6 +19,8 @@ class Settings(BaseSettings):
     simulator_interval_seconds: float = Field(default=5, ge=1)
     measurement_stale_seconds: int = Field(default=30, ge=1)
     checkin_stale_hours: int = Field(default=24, ge=1)
+    ai_contract_version: Literal["1.0", "1.1"] = "1.0"
+    ai_trend_window_days: int = Field(default=3, ge=2, le=7)
     ai_service_url: str = ""
     ai_service_token: str = ""
     ai_timeout_seconds: float = Field(default=8, ge=0.1, le=30)
