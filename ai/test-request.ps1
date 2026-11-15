@@ -1,5 +1,5 @@
 param(
-    [string]$Uri = "http://127.0.0.1:3002/generate-missions",
+    [string]$Uri = "http://127.0.0.1:3001/generate-missions",
     [string]$Token = "demo-token",
     [switch]$ShowRequest
 )
@@ -7,7 +7,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $payload = @{
-    contract_version = "1.0"
+    contract_version = "1.1"
     astronaut_id = "orbiton-demo"
     mission_date = (Get-Date).ToString("yyyy-MM-dd")
     health = @{
@@ -39,37 +39,78 @@ $payload = @{
         body_temperature_c = 36.7
         source = "simulator"
     }
-    check_in = @{
-        mood = 3
-        stress = 4
-        energy = 2
-        loneliness = 3
+    check_in = @{ mood = 3; stress = 4; energy = 2; loneliness = 3 }
+    trend_summary = @{
+        window_days = 3
+        sleep = "decreasing"
+        mood = "stable"
+        stress = "increasing"
+        energy = "decreasing"
+        connection = "insufficient_data"
     }
     alerts = @()
     task_catalog = @(
-        @{ template_id = "quiet_rest"; category = "rest"; title = "Take a five-minute quiet rest break." }
-        @{ template_id = "breathing_pause"; category = "breathing"; title = "Take a short, comfortable breathing break." }
-        @{ template_id = "positive_moment"; category = "reflection"; title = "Write down one positive moment from today." }
-        @{ template_id = "energy_note"; category = "reflection"; title = "Note how your energy has changed today." }
-        @{ template_id = "crew_connection"; category = "social"; title = "Check in with a crew member for a few minutes." }
-        @{ template_id = "gentle_mobility"; category = "mobility"; title = "Try a brief, comfortable mobility break if your mission guidance allows it." }
-        @{ template_id = "medical_review"; category = "medical_review"; title = "Ask the mission medical team to review the flagged readings." }
+        @{
+            template_id = "earth_gaze_reset"; category = "recovery"
+            title = "Take a two-minute Earth-view or quiet-view reset when available."
+            duration_minutes = 2; intensity = "low"
+            reason_codes = @("high_stress", "protect_energy", "short_sleep")
+        }
+        @{
+            template_id = "crew_voice_checkin"; category = "social"
+            title = "Share a short voice check-in with a crew member."
+            duration_minutes = 5; intensity = "low"
+            reason_codes = @("low_connection", "support_mood")
+        }
+        @{
+            template_id = "single_priority_block"; category = "focus"
+            title = "Choose one priority for the next work block."
+            duration_minutes = 3; intensity = "low"
+            reason_codes = @("protect_energy", "support_focus", "balanced_day")
+        }
+        @{
+            template_id = "quiet_listening"; category = "recovery"
+            title = "Spend a few minutes listening to a calming sound if your duties allow."
+            duration_minutes = 3; intensity = "low"
+            reason_codes = @("high_stress", "protect_energy")
+        }
+        @{
+            template_id = "effort_acknowledgement"; category = "reflection"
+            title = "Acknowledge one effort you made today."
+            duration_minutes = 2; intensity = "low"
+            reason_codes = @("support_mood", "low_energy")
+        }
+        @{
+            template_id = "hydration_reminder"; category = "hydration"
+            title = "Set a reminder for your existing mission-approved hydration schedule."
+            duration_minutes = 2; intensity = "low"
+            reason_codes = @("balanced_day", "support_focus")
+        }
+    )
+    reason_catalog = @(
+        @{ reason_code = "short_sleep"; description = "Recent sleep is short or decreasing." }
+        @{ reason_code = "high_stress"; description = "Reported stress is high or increasing." }
+        @{ reason_code = "low_energy"; description = "Reported energy is low." }
+        @{ reason_code = "protect_energy"; description = "Keep this action short and low intensity." }
+        @{ reason_code = "low_connection"; description = "Support a small moment of crew connection." }
+        @{ reason_code = "support_mood"; description = "Support reported mood with a small action." }
+        @{ reason_code = "support_focus"; description = "Support a bounded next work block." }
+        @{ reason_code = "balanced_day"; description = "Provide a balanced preventive action." }
     )
     constraints = @{
         task_count = 3
         distinct_templates = $true
         no_diagnosis = $true
+        max_duration_minutes = 10
+        allowed_intensities = @("low")
     }
 }
 
 $headers = @{}
-if ($Token) {
-    $headers.Authorization = "Bearer $Token"
-}
+if ($Token) { $headers.Authorization = "Bearer $Token" }
 
-Write-Host "Sending contract 1.0 test data to $Uri ..." -ForegroundColor Cyan
-
-$json = $payload | ConvertTo-Json -Depth 10
+Write-Host "Sending contract 1.1 test data to $Uri ..." -ForegroundColor Cyan
+$json = $payload | ConvertTo-Json -Depth 12
 if ($ShowRequest) {
     Write-Host "`nRequest JSON (secrets excluded):" -ForegroundColor Yellow
     Write-Output $json
@@ -85,17 +126,13 @@ try {
         -Body $json `
         -TimeoutSec 20
 
-    Write-Host "Success: AI returned three approved templates." -ForegroundColor Green
+    Write-Host "Success: AI returned three approved templates with reason codes." -ForegroundColor Green
     $result | ConvertTo-Json -Depth 10
 }
 catch {
     $status = $_.Exception.Response.StatusCode.value__
     if (-not $status) { $status = "connection-error" }
     Write-Host "Request failed ($status)." -ForegroundColor Red
-    if ($_.ErrorDetails.Message) {
-        Write-Host $_.ErrorDetails.Message
-    } else {
-        Write-Host $_.Exception.Message
-    }
+    if ($_.ErrorDetails.Message) { Write-Host $_.ErrorDetails.Message } else { Write-Host $_.Exception.Message }
     exit 1
 }

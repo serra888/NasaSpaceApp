@@ -11,7 +11,7 @@ Requirements: Node.js 20 or newer. The service uses built-in Node APIs, so there
 3. Run `npm start`.
 4. The service listens on `http://127.0.0.1:3001` by default.
 
-The only generation endpoint is `POST /generate-missions`. It accepts contract version `1.0` and returns exactly three distinct approved template IDs. Gemini cannot create arbitrary medical text or select the backend-reserved `medical_review` task.
+The only generation endpoint is `POST /generate-missions`. It accepts backend contract versions `1.0` and `1.1`. Version `1.1` uses backend-computed trend enums and an expanded approved catalog, then returns exactly three distinct template IDs with one permitted `reason_code` for each. Gemini cannot create arbitrary medical text or select the backend-reserved `medical_review` task.
 
 Run tests with `npm test`.
 
@@ -31,9 +31,12 @@ Backend `.env`:
 ```env
 AI_SERVICE_URL=http://127.0.0.1:3001/generate-missions
 AI_SERVICE_TOKEN=choose_a_local_shared_secret
+AI_CONTRACT_VERSION=1.1
 ```
 
-Gemini failures return a non-2xx response from the AI service so the backend can apply and record its own deterministic fallback.
+Apply the backend `0002` migration before enabling `AI_CONTRACT_VERSION=1.1`. Keep `1.0` during rollout if the backend database has not been migrated yet.
+
+Gemini failures or invalid task/category/reason relationships return a non-2xx response from the AI service so the backend can apply and record its own deterministic fallback.
 
 ## Live demo data ownership
 

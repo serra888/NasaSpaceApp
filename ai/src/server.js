@@ -1,4 +1,5 @@
 import http from "node:http";
+import { pathToFileURL } from "node:url";
 import { config } from "./config.js";
 import { GeminiClient } from "./gemini-client.js";
 import { ContractError, validateBackendContext, validateTaskSelection } from "./backend-contract.js";
@@ -22,7 +23,7 @@ async function readJson(request) {
   let body = "";
   for await (const chunk of request) {
     body += chunk;
-    if (Buffer.byteLength(body) > 32_768) throw new ContractError("Request body is too large");
+    if (Buffer.byteLength(body) > 65_536) throw new ContractError("Request body is too large");
   }
   try {
     return JSON.parse(body || "{}");
@@ -63,7 +64,13 @@ export function createServer({ client = geminiClient, serviceToken = config.aiSe
       }
       try {
         const context = validateBackendContext(await readJson(request));
-        if (context.alerts.length > 0 || context.health.stale || context.mood.stale || context.health.value === null) {
+        if (
+          context.alerts.length > 0 ||
+          context.health.stale ||
+          context.mood.stale ||
+          context.health.value === null ||
+          context.mood.value === null
+        ) {
           return sendJson(response, 422, {
             error: { code: "UNSAFE_OR_INSUFFICIENT_CONTEXT", message: "Backend fallback is required" }
           });
@@ -84,7 +91,7 @@ export function createServer({ client = geminiClient, serviceToken = config.aiSe
   });
 }
 
-if (process.env.NODE_ENV !== "test") {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   createServer().listen(config.port, "127.0.0.1", () => {
     console.log(`Orbitone AI service listening on http://127.0.0.1:${config.port}`);
     console.log(config.geminiApiKey ? "Gemini provider configured" : "GEMINI_API_KEY missing; backend fallback will be required");

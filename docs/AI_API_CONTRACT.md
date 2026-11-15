@@ -1,13 +1,13 @@
 # Orbitone Backend ↔ AI Contract
 
-This document mirrors the backend branch contract version `1.0` for the AI implementation. The backend remains the source of truth for persistence, scores, live simulator data, approved task titles, fallback behavior, and task completion.
+This document mirrors backend contract versions `1.0` and `1.1` for the AI implementation. The backend remains the source of truth for persistence, scores, live simulator data, approved task and reason text, fallback behavior, and task completion.
 
 ## Runtime flow
 
 1. The backend simulator writes a new demo sensor measurement to PostgreSQL every five seconds.
 2. The frontend polls backend `GET /api/v1/status` every five seconds and displays the latest persisted reading.
 3. A check-in or explicit mission refresh makes the backend call this AI service.
-4. The AI service selects exactly three approved task template IDs.
+4. The AI service selects exactly three approved task template IDs. Under `1.1`, it also selects one backend-approved reason code for each task.
 5. The backend validates the selection, renders its own approved titles, persists the tasks, and returns them to the frontend.
 
 The frontend never calls this service or Gemini directly. Sensor polling does not trigger AI generation.
@@ -22,7 +22,7 @@ http://127.0.0.1:3001/generate-missions
 
 If `AI_SERVICE_TOKEN` is configured on the AI service, the backend must send the same value as `Authorization: Bearer <token>`.
 
-### Request
+### Contract 1.0 request
 
 ```json
 {
@@ -92,9 +92,34 @@ The response contains no generated prose or additional keys:
 
 All three templates must be distinct, appear in the request catalog, and use the catalog's matching category. `medical_review` is reserved for backend routing and can never be selected by Gemini.
 
+### Contract 1.1 additions
+
+Contract `1.1` keeps the existing health, mood, measurement, check-in and alert fields, and adds:
+
+- `trend_summary`: backend-computed `increasing`, `stable`, `decreasing`, or `insufficient_data` values for sleep, mood, stress, energy and connection;
+- expanded `task_catalog` entries with `duration_minutes`, `intensity` and permitted `reason_codes`;
+- `reason_catalog`: backend-owned codes and descriptions;
+- `constraints.max_duration_minutes=10` and `constraints.allowed_intensities=["low"]`.
+
+The AI response contains no generated prose:
+
+```json
+{
+  "tasks": [
+    { "template_id": "earth_gaze_reset", "category": "recovery", "reason_code": "high_stress" },
+    { "template_id": "crew_voice_checkin", "category": "social", "reason_code": "support_mood" },
+    { "template_id": "single_priority_block", "category": "focus", "reason_code": "protect_energy" }
+  ]
+}
+```
+
+Every reason must exist in both `reason_catalog` and the selected task's `reason_codes`. The service rejects unknown reasons, category mismatches, duplicate templates, extra response fields, `medical_review`, non-low intensity selections, and tasks longer than the supplied maximum. Raw history, symptoms, journals and personal notes are not accepted.
+
+The canonical full `1.1` payload and rollout rules are in [AI_CONTRACT_V1_1_PROPOSAL.md](AI_CONTRACT_V1_1_PROPOSAL.md).
+
 ### Errors and fallback
 
-- `400 INVALID_CONTRACT`: request or generated selection violates contract `1.0`.
+- `400 INVALID_CONTRACT`: request or generated selection violates contract `1.0` or `1.1`.
 - `401 UNAUTHORIZED`: configured service token is missing or incorrect.
 - `415 UNSUPPORTED_MEDIA_TYPE`: request is not `application/json`.
 - `422 UNSAFE_OR_INSUFFICIENT_CONTEXT`: alerts, stale scores, or missing health score require backend fallback.
