@@ -103,3 +103,5 @@
 .helmet-stage[data-ready="false"]{visibility:hidden}
 .helmet-stage-photo{width:45.603%;height:46.875%;left:27.850%;top:3.90625%}
 .photo-helmet{display:block;transform-origin:50% 90%;will-change:transform}
+/* Prevent duplicate writes while backend mutations are pending. */
+button:disabled{opacity:.55;cursor:wait}
